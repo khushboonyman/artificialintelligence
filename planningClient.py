@@ -42,7 +42,7 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/stupid.lvl', 'r')
+            server_messages = open('levels/SAbotbot.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     #while len(State.GoalAt) > 0 and count < 1:
     while True :
         for agent in State.AgentAt :
-            if len(agent.plan1) == 0 :
+            if len(agent.plan1) == 0 and len(agent.request_plan) == 0 :
                 if len(agent.plan2) == 0 :
                     agent.MakeDesirePlan()
                 else :
@@ -84,7 +84,8 @@ if __name__ == '__main__':
             for agent1 in State.AgentAt :
                 for agent2 in State.AgentAt :
                     if (agent1.color == agent2.color and agent1 != agent2 and agent1.move_box is not None and 
-                        agent2.move_box is not None and agent1.move_box == agent2.move_box) :
+                        agent2.move_box is not None and agent1.move_box == agent2.move_box and 
+                        agent1.move_goal is not None and agent2.move_goal is not None and agent1.move_goal == agent2.move_goal) :
                         conflict = True
                         if len(agent1.plan1) <= len(agent2.plan1) :
                             agent2.Replan()
@@ -96,7 +97,7 @@ if __name__ == '__main__':
         combined_actions = list()
         
         for agent in State.AgentAt :
-            agent_action = no_op
+            agent_action = agent.CheckAndExecute()
             combined_actions.append(agent_action)
         
         if combined_actions.count(no_op) == len(combined_actions) :

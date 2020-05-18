@@ -16,6 +16,7 @@ class State :
     MAX_ROW = 0 
     MAX_COL = 0
     Paths = set()
+    SingleAgent = False
     
     color_dict = dict()
     goal_level = list() #shows how the goal level looks .. one time
@@ -25,7 +26,29 @@ class State :
     BoxAt = dict() #all non-goal reached boxes .. {letter : list(Box(location,color,letter))
     
     @staticmethod
-    def getAgent(number):
+    def getBoxAgent(letter,location):
+        blocking_box = None
+        agents = list()
+        for agent in State.AgentAt :
+            for box in agent.boxes :
+                if box.letter == letter and box.location == location :
+                    if agent.move_box is not None and agent.move_box == box :
+                        return list(),None
+                    else :
+                        blocking_box = box
+                        break
+        
+        for agent in State.AgentAt :
+            if blocking_box is not None and blocking_box in agent.boxes :
+                if agent.move_box is not None and agent.move_box == box :
+                    return list(),None
+                else :
+                    agents.append(agent)
+                    
+        return agents,blocking_box
+    
+    @staticmethod
+    def getAgentAgent(number):
         for agent in State.AgentAt:
             if agent.number == number:
                 return agent

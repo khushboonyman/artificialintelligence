@@ -45,15 +45,27 @@ for agent in State.AgentAt :
             print('goals'+str(length)+str(goal))
             
 for agent in State.AgentAt :
-    print('agent '+str(agent)+' box ' + str(agent.move_box) + ' goal' + str(agent.move_goal))
+    if agent.color == 'red' :
+        print('agent '+str(agent)+' box ' + str(agent.move_box) + ' goal' + str(agent.move_goal))
     
-    for p1 in agent.plan1 :
-        print(p1)
+        for p1 in agent.plan1 :
+            print(p1)
     
-    print(' next ' + str(agent.next_box) + ' goal ' + str(agent.next_goal))
-    print('second plan')
-    for p2 in agent.plan2 :
-        print(p2)
+        print(' next ' + str(agent.next_box) + ' goal ' + str(agent.next_goal))
+        print('second plan')
+        for p2 in agent.plan2 :
+            print(p2)
+    
+        print('request')
+        for key,value in agent.request.items() :
+            print('entity'+str(key))
+            (agent,path) = value
+            print('agent'+str(agent))
+            for p in path :
+                print(p)
+            
+    
+            
 ########################TESTING##################################
 
     

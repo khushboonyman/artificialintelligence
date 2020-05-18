@@ -44,6 +44,8 @@ def ReadHeaders(messages):
     if line == '#levelname':
         line = Readlines(messages)
         ToServer('#Level name is ' + line)
+        if line[:2] == 'SA' :
+            State.SingleAgent = True
     else:
         HandleError('Level name is missing')
 
@@ -170,6 +172,7 @@ def SetUpObjects() :
         
 def MakeInitialPlan():
     for agent in State.AgentAt :
+        agent.boxes = set()
         letters = [letter for letter in State.color_dict[agent.color]]
         for letter in letters :
             if letter in State.BoxAt.keys() :  
