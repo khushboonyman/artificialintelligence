@@ -20,17 +20,10 @@ import sys
 import re
 
 #global variables
-global server, limit, no_action  #if running from server or IDE
-server = False
+global limit, no_action  #if running from server or IDE
 limit = 100
 
 no_action = 'NoOp'
-        
-def ToServer(message):
-    if server :
-        print(message, file=sys.stdout, flush=True)
-    else :
-        print(message)
         
 def Readlines(msg):
     return msg.readline().rstrip()
@@ -116,6 +109,7 @@ def SetUpObjects() :
     State.BoxAt = dict() 
     State.FreeCells = set() 
     State.GoalLocations = set()
+    State.Paths = set()
     
     locations = list()
     pattern_agent = re.compile("[0-9]+")
@@ -151,60 +145,95 @@ def SetUpObjects() :
                         State.GoalLocations.add(loc)
         locations.append(locations_of_a_row)
         
-    for row in range(1, MAX_ROW - 1):
+    del(State.goal_level)
+    
+    
+    for row in range(1, State.MAX_ROW - 1):
         START_COL = State.current_level[row].index('+')+1
         END_COL = len(State.current_level[row])-1
         if START_COL < END_COL :
             for col in range(START_COL, END_COL):
                 try :
                     if State.current_level[row][col] != '+' :                        
-                        State.Neighbours[locations[row][col]] = set()
+                        State.Neighbours[locations[row][col]] = list()
                         if len(State.current_level[row + 1]) > col and State.current_level[row + 1][col] != '+':
-                            State.Neighbours[locations[row][col]].add(locations[row + 1][col])
+                            State.Neighbours[locations[row][col]].append(locations[row + 1][col])
                         if len(State.current_level[row - 1]) > col and State.current_level[row - 1][col] != '+':
-                            State.Neighbours[locations[row][col]].add(locations[row - 1][col])
+                            State.Neighbours[locations[row][col]].append(locations[row - 1][col])
                         if State.current_level[row][col + 1] != '+':
-                            State.Neighbours[locations[row][col]].add(locations[row][col + 1])
+                            State.Neighbours[locations[row][col]].append(locations[row][col + 1])
                         if State.current_level[row][col - 1] != '+':
-                            State.Neighbours[locations[row][col]].add(locations[row][col - 1])
+                            State.Neighbours[locations[row][col]].append(locations[row][col - 1])
                 except Exception as ex :
                     HandleError('SetupObjects'+' Index row ='+str(row)+'col ='+str(col)+'/nIndex error {}'.format(repr(ex)))
-
+            
+        
 def MakeInitialPlan():
     for agent in State.AgentAt :
         letters = [letter for letter in State.color_dict[agent.color]]
         for letter in letters :
-            boxes = State.BoxAt[letter]
-            goals = State.GoalAt[letter]
-        
-            for box in boxes :
-                plan_a_b = Plan(agent.location, box.location) # Plan for the agent to reach box
-                agent_has_plan_to_box = plan_a_b.CreateBeliefPlan(agent.location)
-                if agent_has_plan_to_box :
-                    plan_a_b.plan.reverse()
-                    State.Plans[plan_a_b] = plan_a_b.plan
-                
-                for goal_location in goals :
-                    plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
-                    plan_g_b = Plan(goal_location, box.location) # Plan for goal to box, could be used when agent has reached a goal and wants to go to next box
-                    box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(box.location)
-                    if box_has_plan_to_goal :
-                        plan_b_g.plan.pop(0)
-                        plan_b_g.plan.append(box.location)
-                        plan_g_b.plan = plan_b_g.plan.copy()
-                        State.Plans[plan_g_b] = plan_g_b.plan 
-                        plan_b_g.plan.pop()
-                        plan_b_g.plan.reverse()
-                        plan_b_g.plan.append(goal_location)
-                        State.Plans[plan_b_g] = plan_b_g.plan
+            if letter in State.BoxAt.keys() :  
+                boxes = State.BoxAt[letter]
+                for box in boxes :
+                    box.goals = PriorityQueue()
+                    plan_a_b = Plan(agent.location, box.location) # Plan for the agent to reach box
+                    agent_has_plan_to_box = plan_a_b.CreateBeliefPlan(agent.location)
+                    if agent_has_plan_to_box :
+                        agent.boxes.add(box)
+                        plan_a_b.plan.reverse()
+                        State.Plans[plan_a_b] = plan_a_b.plan
+                        
+                    if letter in State.GoalAt.keys() :
+                        goals = State.GoalAt[letter]
+                        
+                        for goal_location in goals :
+                            plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
+                            box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(box.location)
+                            if box_has_plan_to_goal :
+                                box.goals.put((len(plan_b_g.plan),goal_location))
+                                if len(plan_b_g.plan) > 1 :
+                                    plan_g_b = Plan(goal_location,box.location)
+                                    plan_g_b.plan = deque(list(plan_b_g.plan)[1:])
+                                    plan_g_b.plan.append(box.location)
+                                    State.Plans[plan_g_b] = plan_g_b.plan
+                                    
+                                plan_b_g.plan.reverse()
+                                State.Plans[plan_b_g] = plan_b_g.plan
+                                
+                            plan_a_g = Plan(agent.location,goal_location)
+                            if plan_a_g not in State.GoalPaths.keys() :
+                                agent_has_plan_to_goal = plan_a_g.CreateBeliefPlan(agent.location)
+                                if agent_has_plan_to_goal :
+                                    plan_a_g.plan.reverse()
+                                    State.GoalPaths[plan_a_g] = plan_a_g.plan
+                                    tmp_list = list(plan_a_g.plan)
+                                #check if there are any goal paths on the way and add them
+                                    for index,p in enumerate(tmp_list) :
+                                        if p!= goal_location and p in State.GoalLocations :
+                                            plan_new_a_g = Plan(agent.location,p)
+                                            if plan_new_a_g not in State.GoalPaths.keys() :
+                                                plan_new_a_g.plan = deque(tmp_list[:index])
+                                                plan_new_a_g.plan.append(p)
+                                                State.GoalPaths[plan_new_a_g] = plan_new_a_g.plan                                            
+                        
 
 def FindDependency() :
     State.GoalDependency = dict()
-    for plan,path in State.Plans.items() :
-        if plan.end in State.GoalLocations :
-            for p in path :
-                if p in State.GoalLocations and p != plan.end :
-                    if p not in State.GoalDependency.keys() :
-                        State.GoalDependency[p] = set()
-                    State.GoalDependency[p].add(plan.end)
-                      
+    for plan,path in State.GoalPaths.items() :
+        for p in path :
+            if p in State.GoalLocations and p != plan.end and p in State.Neighbours[plan.end] :
+                if p not in State.GoalDependency.keys() :
+                    State.GoalDependency[p] = set()
+                State.GoalDependency[p].add(plan.end)
+    del(State.GoalLocations)
+    del(State.color_dict)
+    del(State.GoalPaths)
+    del(State.GoalAt)
+    del(State.BoxAt)
+    
+def FindDeadCells() :
+    State.DeadCells = State.FreeCells.difference(State.Paths)
+    
+def CheckSuccess() :        
+        return      
+#MAKE A BFS.. total path agent to box to goal         

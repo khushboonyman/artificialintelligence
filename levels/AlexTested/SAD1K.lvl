@@ -1,0 +1,17 @@
+#domain
+hospital
+#levelname
+SAD1K
+#colors
+blue: 0, A
+#initial
++++++++++++
++0AAA     +
++     +++++
++++++++++++
+#goal
++++++++++++
++      AAA+
++     +++++
++++++++++++
+#end

@@ -8,18 +8,30 @@ from queue import PriorityQueue
 from state import *
 import sys
 from error import *
+from collections import deque
     
 class Plan():
     def __init__(self, start, end):
         self.start = start
         self.end = end
         self.frontier_set = {self.start}
-        self.plan = []
+        self.plan = deque()
 
     def __eq__(self,other) :
         if self.start == other.start and self.end == other.end :
             return True
         return False
+    
+    def __lt__(self,other) :
+        if len(self.plan) <= len(other.plan) :
+            return True
+        return False
+    
+    def __gt__(self,other) :
+        if len(self.plan) > len(other.plan) :
+            return True
+        return False
+    
     
     def __hash__(self) :
         return hash(str(self))
@@ -30,6 +42,7 @@ class Plan():
     def Heuristic(self, location): #we need to improve the heuristic
         return abs(self.end.x - location.x) + abs(self.end.y - location.y)
 
+    #while finding a plan, relax the preconditions .. make A* instead .. 
     def CreateBeliefPlan(self, loc):
         if loc == self.end :
             return True        
@@ -56,8 +69,10 @@ class Plan():
                 leaf = frontier.get()[1]
                 if self.CreateBeliefPlan(leaf):
                     self.plan.append(leaf)
+                    State.Paths.add(leaf)
                     return True
 
+    #while finding a plan, take preconditions into account
     def CreateIntentionPlan(self, loc, agent_location):
         if loc == self.end:
             return True        
@@ -85,5 +100,7 @@ class Plan():
                 if self.CreateIntentionPlan(leaf, agent_location):
                     self.plan.append(leaf)
                     return True
+                
+    
 
 

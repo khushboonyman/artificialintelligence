@@ -1,12 +1,12 @@
 '''
 Created on Wed Apr 15 21:55:26 2020
 @author :
-    
+
 change the value of global variable 'server' to True, when running using the server
 When testing it with file, make it False
 
-This will display the actions and also update current_level. At any point you can display 
-current_level to see how the level looks like after any action 
+This will display the actions and also update current_level. At any point you can display
+current_level to see how the level looks like after any action
 
 '''
 
@@ -17,8 +17,8 @@ import re
 #from plan import *
 from state import *
 import sys
-from conflict import *
 from setupobjects import *
+import globals
 
 x=2500
 sys.setrecursionlimit(x)
@@ -31,22 +31,23 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Client based on planning approach.')
     parser.add_argument('--max-memory', metavar='<MB>', type=float, default=2048.0,
                         help='The maximum memory usage allowed in MB (soft limit, default 2048).')
+    parser.add_argument('--server', type=bool, default=False,
+                        help='The maximum memory usage allowed in MB (soft limit, default 2048).')
 
-    strategy_group = parser.add_mutually_exclusive_group()
     args = parser.parse_args()
     memory.max_usage = args.max_memory
+    globals.server = args.server
 
     try:
-        if server :
+        if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages=open('../levels/SAD1.lvl','r')
-        
+            server_messages = open('levels/stupid.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
         
-        if not server :
+        if not globals.server :
             server_messages.close()
 
     except Exception as ex:
@@ -60,30 +61,68 @@ if __name__ == '__main__':
     FindDependency()
     #sort the agents according to the number, so as to send their actions in the right order
     State.AgentAt.sort()
+    FindDeadCells()
+    no_op = 'NoOp'
 ###########################################one time execution###################################################    
-    count = 0 #used for testing, can be removed in the final deliverable
     
     """This gets called until every goal is reached"""
     
-    while len(State.GoalLocations) > 0 and count < 10:        
+    #while len(State.GoalAt) > 0 and count < 1:
+    while True :
         for agent in State.AgentAt :
-            combined_actions = list()
-            if len(agent.plan) == 0 :
-                agent.MakePlan()
-            combined_actions.append(agent.Execute())
-            
-            execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely
-            ToServer(execute)
-            
-            if server :
-                step_succeed = FromServer() #if you want to see server's response, print with a #                
+            if len(agent.plan1) == 0 :
+                if len(agent.plan2) == 0 :
+                    agent.MakeDesirePlan()
+                else :
+                    agent.plan1 = agent.plan2.copy()
+                    agent.move_box1 = agent.move_box2.copy()
+                    agent.move_goal1 = agent.move_goal2.copy()
+                    agent.FindNextBox()
         
-        count+=1
+        while True :
+            conflict = False
+            for agent1 in State.AgentAt :
+                for agent2 in State.AgentAt :
+                    if (agent1.color == agent2.color and agent1 != agent2 and agent1.move_box is not None and 
+                        agent2.move_box is not None and agent1.move_box == agent2.move_box) :
+                        conflict = True
+                        if len(agent1.plan1) <= len(agent2.plan1) :
+                            agent2.Replan()
+                        else :
+                            agent1.Replan()
+            if not conflict :
+                break
+        
+        combined_actions = list()
+        
+        for agent in State.AgentAt :
+            agent_action = no_op
+            combined_actions.append(agent_action)
+        
+        if combined_actions.count(no_op) == len(combined_actions) :
+            break
+        
+        execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely    
+        ToServer(execute)
+                
+        if globals.server :
+            step_succeed = FromServer() #if you want to see server's response, print with a #                
+            result = step_succeed.rstrip().split(';')
+            if 'false' in result :
+                final_combined_actions = list()
+                for index,r in enumerate(result) :
+                    if r == 'true' :
+                        agent_action = no_op
+                    else :
+                        agent_action = combined_actions[index]
+                    final_combined_actions.append(agent_action)
+                execute = ';'.join(final_combined_actions)  #prepare joint actions of agents to run parallely    
+                ToServer(execute) 
+        
         
 ######################################################################################################################    
     ToServer('#Memory used ' + str(memory.get_usage()) + ' MB')
-                
-                
+
             
             
             

@@ -2,7 +2,8 @@
 Created on Wed Apr 15 21:55:26 2020
 @author :
 """
-import state
+from state import *
+from queue import PriorityQueue
 
 class Location:
     def __init__(self, x=0, y=0):
@@ -16,17 +17,23 @@ class Location:
             return False
 
     def __lt__(self, other):
-        if self.x < other.x:
+        if self in State.FreeCells and other not in State.FreeCells :
             return True
-        if self.y < other.y:
-            return True
-        return False
+        if self not in State.FreeCells and other in State.FreeCells :
+            return False
+        if len(State.Neighbours[self]) < len(State.Neighbours[other]) :
+            return False
+        
+        return True
 
     def __gt__(self, other):
-        if self.x > other.x:
+        if self in State.FreeCells and other not in State.FreeCells :
+            return False
+        if self not in State.FreeCells and other in State.FreeCells :
             return True
-        if self.y > other.y:
+        if len(State.Neighbours[self]) < len(State.Neighbours[other]) :
             return True
+        
         return False
     
     def __ne__(self, other):
