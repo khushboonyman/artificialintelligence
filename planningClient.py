@@ -83,14 +83,14 @@ if __name__ == '__main__':
             conflict = False
             for agent1 in State.AgentAt :
                 for agent2 in State.AgentAt :
-                    if (agent1.color == agent2.color and agent1 != agent2 and agent1.move_box is not None and 
-                        agent2.move_box is not None and agent1.move_box == agent2.move_box and 
-                        agent1.move_goal is not None and agent2.move_goal is not None and agent1.move_goal == agent2.move_goal) :
+                    if ((agent1.color == agent2.color and agent1 != agent2) 
+                    and ((agent1.move_box is not None and agent2.move_box is not None and agent1.move_box == agent2.move_box) 
+                    or (agent1.move_goal is not None and agent2.move_goal is not None and agent1.move_goal == agent2.move_goal))) :
                         conflict = True
                         if len(agent1.plan1) <= len(agent2.plan1) :
-                            agent2.Replan()
+                            agent2.Replan(agent1.move_box,agent1.move_goal)
                         else :
-                            agent1.Replan()
+                            agent1.Replan(agent2.move_box,agent2.move_goal)
             if not conflict :
                 break
         

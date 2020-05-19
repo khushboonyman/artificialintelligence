@@ -17,6 +17,7 @@ class State :
     MAX_COL = 0
     Paths = set()
     SingleAgent = False
+    Requests = dict()
     
     color_dict = dict()
     goal_level = list() #shows how the goal level looks .. one time
