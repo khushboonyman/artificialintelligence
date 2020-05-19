@@ -406,6 +406,10 @@ class Agent:
         self.move_box = None
         self.move_goal = None
 
+    def FindDeadCells(self,how_many,box_from) :        
+        return
+
+
     def PlanMoveBoxes(self,to_free_cells) :
         new_boxes = list()
         for box in self.request_boxes :
@@ -416,12 +420,10 @@ class Agent:
                 self.request_plan.extend(plan_a_b)
                 new_boxes.append(box)
                 break
-        
-        
-        for cell in State.DeadCells :
-            
-        
-            
+        if len(new_boxes) == 0 :
+            return True,0
+    
+        parking = FindDeadCells(len(self.request_boxes),box)            
         
     def PlanAnotherPlace(self,to_free_cells,loc,frontier_set=set(),frontier=deque()) :        
         if loc not in to_free_cells :
@@ -441,9 +443,8 @@ class Agent:
                 leaf = frontier.popleft()
                 if self.PlanAnotherPlace(to_free_cells,leaf,frontier_set,frontier):
                     self.request_plan.append(leaf)
-                    return True
-        
-        
+                    return True           
+    
     #make plan for request
     def PlanRequest(self,requests) :
         self.request_boxes = list()
@@ -463,8 +464,7 @@ class Agent:
                 return False,0
         else :
             return self.PlanMoveBoxes(paths)
-            
-                
+                            
 
     def AssignRequest(self,agent,blocking_box=None) :
         assigner = self
