@@ -244,6 +244,5 @@ def FindDeadCells() :
         if agent.location not in State.Paths :
             State.DeadCells.add(agent.location)
     
-def CheckSuccess() :        
-        return      
+      
 #MAKE A BFS.. total path agent to box to goal         

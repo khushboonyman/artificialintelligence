@@ -97,9 +97,10 @@ if __name__ == '__main__':
         combined_actions = list()
         
         for agent in State.AgentAt :
-            possible = agent.Check()
-            if not possible :
-                State.Bidding(agent)
+            agent.Check()
+            
+        if len(State.Requests) != 0 :
+            State.Bidding()
 ############################################################################################################        
         #for agent in State.AgentAt :
         #    agent_action = agent.ExecuteDecision()            

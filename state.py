@@ -75,12 +75,12 @@ class State :
                 return agent
         return None
 
-     @staticmethod
+    @staticmethod
     def Bidding():
         plan_lengths = [State.MAX_COL*State.MAX_ROW]*len(State.AgentAt)
         
         for agent,requests in State.Requests.items() :
-            can,reply = agent.PlanRequest(reqests)
+            can,reply = agent.PlanRequest(requests)
             if can :
                 plan_lengths[int(agent.number)] = reply
         

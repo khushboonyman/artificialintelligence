@@ -98,8 +98,29 @@ class Plan():
                 leaf = frontier.get()[1]
                 if self.CreateIntentionPlan(leaf, agent_location):
                     self.plan.append(leaf)
-                    return True
-                
-    
+                    return True    
 
+#planning a request
+    def CreateAlernativeIntentionPlan(self,loc,valid_locations) :
+        if loc == self.end:
+            return True        
+        leaves = State.Neighbours[loc]
+            
+        frontier = PriorityQueue()
+
+        for leaf in leaves:
+            if leaf not in self.frontier_set and (leaf in State.FreeCells or leaf==self.end or leaf in valid_locations) :
+                heur = self.Heuristic(leaf)
+                frontier.put((heur, leaf))
+                self.frontier_set.add(leaf)
+
+        if frontier.empty():
+            return False
+        else:
+            while not frontier.empty():
+                leaf = frontier.get()[1]
+                if self.CreateAlernativeIntentionPlan(leaf,valid_locations):
+                    self.plan.append(leaf)
+                    return True                
+    
 
