@@ -28,8 +28,7 @@ for key,value in State.GoalPaths.items() :
         print(v)
 
 for cells in State.DeadCells :
-    print(cells)
-    if State.current_level[cells.x][cells.y] == ' ' :
+    if State.current_level[cells.x][cells.y] == ' ' or State.current_level[cells.x][cells.y] == '0'  :
         State.current_level[cells.x] = State.current_level[cells.x][:cells.y]+'*'+State.current_level[cells.x][cells.y+1:] 
         
 l = Location(2,2)

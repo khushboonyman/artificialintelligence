@@ -4,12 +4,11 @@ hospital
 SAbotbot
 #colors
 blue: 0, A
-red : 1
 #initial
 ++++++++++
 +AAAA+++++
 +A++A+++++
-+A++1   ++
++A++    ++
 + ++ 0  ++
 ++++++++++
 #goal

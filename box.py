@@ -14,7 +14,7 @@ class Box:
         self.goals = goals
         
     def __str__(self):
-        return str(self.location) + ' Color : ' + self.color + ' Letter : ' + self.letter
+        return str(self.location) + ' Col: ' + self.color + ' Let : ' + self.letter
 
     def __hash__(self):
         return hash(str(self))

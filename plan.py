@@ -37,7 +37,7 @@ class Plan():
         return hash(str(self))
     
     def __str__(self):
-        return ('Start : ' + str(self.start) +' End : ' + str(self.end))
+        return ('St: ' + str(self.start) +' End : ' + str(self.end))
 
     def Heuristic(self, location): #we need to improve the heuristic
         return abs(self.end.x - location.x) + abs(self.end.y - location.y)
@@ -69,7 +69,6 @@ class Plan():
                 leaf = frontier.get()[1]
                 if self.CreateBeliefPlan(leaf):
                     self.plan.append(leaf)
-                    State.Paths.add(leaf)
                     return True
 
     #while finding a plan, take preconditions into account

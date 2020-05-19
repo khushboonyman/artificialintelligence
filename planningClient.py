@@ -74,9 +74,9 @@ if __name__ == '__main__':
                 if len(agent.plan2) == 0 :
                     agent.MakeDesirePlan()
                 else :
-                    agent.plan1 = agent.plan2.copy()
-                    agent.move_box1 = agent.move_box2.copy()
-                    agent.move_goal1 = agent.move_goal2.copy()
+                    agent.plan1 = agent.plan2
+                    agent.move_box1 = agent.move_box2
+                    agent.move_goal1 = agent.move_goal2
                     agent.FindNextBox()
         
         while True :
@@ -97,8 +97,13 @@ if __name__ == '__main__':
         combined_actions = list()
         
         for agent in State.AgentAt :
-            agent_action = agent.CheckAndExecute()
-            combined_actions.append(agent_action)
+            possible = agent.Check()
+            if not possible :
+                State.Bidding(agent)
+############################################################################################################        
+        #for agent in State.AgentAt :
+        #    agent_action = agent.ExecuteDecision()            
+        #    combined_actions.append(agent_action)
         
         if combined_actions.count(no_op) == len(combined_actions) :
             break

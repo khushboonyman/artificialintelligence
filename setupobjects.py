@@ -185,6 +185,8 @@ def MakeInitialPlan():
                         agent.boxes.add(box)
                         plan_a_b.plan.reverse()
                         State.Plans[plan_a_b] = plan_a_b.plan
+                        for p in plan_a_b.plan :
+                            State.Paths.add(p)
                         
                     if letter in State.GoalAt.keys() :
                         goals = State.GoalAt[letter]
@@ -202,6 +204,8 @@ def MakeInitialPlan():
                                     
                                 plan_b_g.plan.reverse()
                                 State.Plans[plan_b_g] = plan_b_g.plan
+                                for p in plan_b_g.plan :
+                                    State.Paths.add(p)
                                 
                             plan_a_g = Plan(agent.location,goal_location)
                             if plan_a_g not in State.GoalPaths.keys() :
@@ -236,6 +240,9 @@ def FindDependency() :
     
 def FindDeadCells() :
     State.DeadCells = State.FreeCells.difference(State.Paths)
+    for agent in State.AgentAt :
+        if agent.location not in State.Paths :
+            State.DeadCells.add(agent.location)
     
 def CheckSuccess() :        
         return      

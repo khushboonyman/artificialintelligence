@@ -42,7 +42,7 @@ class Location:
         return False
 
     def __str__(self):
-        return 'Location is : ' + str(self.x) + ',' + str(self.y)
+        return 'Loc: ' + str(self.x) + ',' + str(self.y)
 
     def __hash__(self):
         return hash(str(self))

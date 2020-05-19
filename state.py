@@ -74,3 +74,34 @@ class State :
             if agent.number == cell_content:
                 return agent
         return None
+
+     @staticmethod
+    def Bidding():
+        plan_lengths = [State.MAX_COL*State.MAX_ROW]*len(State.AgentAt)
+        
+        for agent,requests in State.Requests.items() :
+            can,reply = agent.PlanRequest(reqests)
+            if can :
+                plan_lengths[int(agent.number)] = reply
+        
+        colors = set()
+        unblocking_agents = set()
+        
+        while sum(plan_lengths) < State.MAX_COL*State.MAX_ROW*len(State.AgentAt) :
+            agent_number = plan_lengths.index(min(plan_lengths))
+            agent = State.AgentAt[agent_number]
+            if agent.color not in colors :
+                colors.add(agent.color)
+                unblocking_agents.add(agent)
+            else :
+                agent.request_plan = list()
+                agent.request_boxes = list()
+                agent.inform_agent = None
+                
+            plan_lengths[agent_number] = State.MAX_COL*State.MAX_ROW
+            del(State.Requests[agent])
+                
+                
+            
+                
+    
