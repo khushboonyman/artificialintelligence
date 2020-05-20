@@ -54,6 +54,15 @@ for key,value in State.Requests.items() :
     print('assigned to'+str(key))
     for v in value :
         print(v)
+        
+for agent in State.AgentAt :
+    print(str(agent.move_box)+' '+str(agent.move_goal))
+    print('plan1')
+    for p1 in agent.plan1 :
+        print(p1)
+    print('plan2')
+    for p2 in agent.plan2 :
+        print(p2)
             
 ########################TESTING##################################
 

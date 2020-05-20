@@ -223,11 +223,10 @@ def FindDependency() :
     State.GoalDependency = dict()
     for plan,path in State.GoalPaths.items() :
         for p in path :
-            if p in State.GoalLocations and p != plan.end and p in State.Neighbours[plan.end] :
+            if p in State.GoalLocations and p != plan.end :
                 if p not in State.GoalDependency.keys() :
                     State.GoalDependency[p] = set()
                 State.GoalDependency[p].add(plan.end)
-    del(State.GoalLocations)
     del(State.color_dict)
     del(State.GoalPaths)
     del(State.GoalAt)
