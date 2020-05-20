@@ -49,9 +49,7 @@ for agent in State.AgentAt :
         print(box)
     for p in agent.request_plan :
         print(p)
-    
-           
-            
+                           
 for key,value in State.Requests.items() :
     print('assigned to'+str(key))
     for v in value :

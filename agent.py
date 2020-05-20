@@ -29,7 +29,7 @@ def TranslateToDir(locfrom, locto):
            
 class Agent:
     def __init__(self, location, color, number, plan1=deque(), plan2 = deque(),move_box = None, move_goal = None, 
-        request_plan = list(), boxes = set(), next_box = None, next_goal = None, request_boxes = list()):
+        request_plan = deque(), boxes = set(), next_box = None, next_goal = None, request_boxes = deque()):
         self.location = location
         self.color = color
         self.number = number
@@ -115,35 +115,6 @@ class Agent:
             return 'Pull(' + move_dir_agent + ',' + curr_dir_box + ')'
 
         return self.NoOp()
-
-    #agent had a plan but had to execute some other tasks and now she replans because she changed location .. relaxed
-    def MakeBoxGoalDesirePlan(self) :
-        plan_a_b_g = deque()
-        plan_a_b = Plan(self.location, self.move_box.location) # Plan for the agent to reach box
-        if plan_a_b in State.Plans.keys() :
-            plan_a_b.plan = State.Plans[plan_a_b]
-            agent_has_plan_to_box = True
-        else :
-            agent_has_plan_to_box = plan_a_b.CreateBeliefPlan(self.location)
-            if agent_has_plan_to_box :
-                plan_a_b.plan.reverse()
-                    
-        if agent_has_plan_to_box :
-            State.Plans[plan_a_b] = plan_a_b.plan
-            plan_a_b_g.extend(plan_a_b.plan)
-            plan_b_g = Plan(self.move_box.location, self.move_goal) # Plan for the box to reach goal
-            if plan_b_g in State.Plans.keys() :
-                plan_b_g.plan = State.Plans[plan_b_g]
-                box_has_plan_to_goal = True
-            else :
-                box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(self.move_box.location)
-                if box_has_plan_to_goal :
-                    plan_b_g.plan.reverse()
-                    
-            if box_has_plan_to_goal :
-                State.Plans[plan_b_g] = plan_b_g.plan
-                plan_a_b_g.extend(plan_b_g.plan)
-                self.plan = plan_a_b_g
                 
     #there are some cells that are not free in the current plan, then agent tries to find another path .. unrelaxed
     def MakeCurrentIntentionPlan(self,request) :
@@ -162,16 +133,14 @@ class Agent:
                 if request :
                     self.request_plan = plan_a_b_g
                 else :
-                    self.plan1 = plan_a_g
-                    
+                    self.plan1 = plan_a_g                    
                 return True
         return False
     
     #agent picks goals that have no dependency and all boxes and finds shortest agent-box-goal path ..relaxed
     def MakeDesirePlan(self):
         if len(self.boxes) == 0 :
-            return
-        
+            return        
         self.move_box,self.move_goal = None,None
         self.plan1 = deque()        
         self.FindShortestPath()
@@ -183,11 +152,9 @@ class Agent:
         self.FindNextBox()
         return plan_made
         
-    def Replan(self,other_box,other_goal) :
-        
+    def Replan(self,other_box,other_goal) :        
         if other_box in self.boxes :
-            self.boxes.remove(other_box)
-        
+            self.boxes.remove(other_box)        
         self.move_box,self.move_goal = None,None
         self.plan1 = deque()        
         self.FindShortestPath(other_goal)
@@ -302,8 +269,7 @@ class Agent:
         if len(self.boxes) == 0 or (len(self.boxes) == 1 and self.move_box in self.boxes) :
             return
         
-        agent_next_loc =  self.plan1[-2]
-        
+        agent_next_loc =  self.plan1[-2]        
         min_plan_length = State.MAX_ROW*State.MAX_COL
         min_b_g_length = State.MAX_ROW*State.MAX_COL
         
@@ -329,7 +295,7 @@ class Agent:
                     while not box.goals.empty() :
                         goal = box.goals.get()
                         goal_location = goal[1]
-                        tmpQueue.put(goal)
+                        tmpQueue.put(goal)  #only select goals that don't have dependency
                         if goal_location not in State.GoalDependency.keys() and goal_location != self.move_goal :
                             break
                         else :
@@ -337,12 +303,12 @@ class Agent:
                     
                     while not tmpQueue.empty() :
                         box.goals.put(tmpQueue.get())
-                #only select goals that don't have dependency
+                
                     if goal_location is not None :                    
                         plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
-                        #if plan was found initially
+                        
                         try :
-                            plan_b_g.plan = State.Plans[plan_b_g]
+                            plan_b_g.plan = State.Plans[plan_b_g]  #if plan was found initially
                             box_has_plan_to_goal = True
                         except Exception as ex :
                             box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(box.location)                        
@@ -360,70 +326,53 @@ class Agent:
                                 min_plan_length = len(plan_a_b_g)
                                 min_b_g_length = len(plan_b_g.plan)
     
-    def DeleteRequest(self,key) :
-        try :
-            del(self.request[key])
-        except Exception as ex :
-            HandleError("delete error "+str(key)+' '+str(self)+' '+str(self.move_box))
-            
     #delete box goal combinations when box is on the goal location                                
     def DeleteCells(self) :
-        save_key = None
-        
+        save_key = None        
         #Delete the box that achieved goal
         State.BoxAt[self.move_box.letter].remove(self.move_box)
         if len(State.BoxAt[self.move_box.letter]) == 0 :
             del(State.BoxAt[self.move_box.letter])
             State.color_dict[self.color].remove(self.move_box.letter)
             if len(State.color_dict[self.color]) == 0 :
-                del(State.color_dict[self.color])
-        
+                del(State.color_dict[self.color])        
         #Delete the goal that now has a valid box        
         State.GoalAt[self.move_box.letter].remove(self.move_goal)
         if len(State.GoalAt[self.move_box.letter]) == 0 :
-            del(State.GoalAt[self.move_box.letter])
-        
+            del(State.GoalAt[self.move_box.letter])        
         #Find the goals that have dependency on the goal that has been reached
         save_keys = deque()
         for key,value in State.GoalDependency.items() :
             if self.move_goal in State.GoalDependency[key] :
-                save_keys.append(key)
-                
+                save_keys.append(key)                
         #Delete the dependent goals from the dictionary and remove the key if there are no more values remaining
         while len(save_keys) != 0 :
             save_key = save_keys.pop() 
             State.GoalDependency[save_key].remove(self.move_goal)
             if len(State.GoalDependency[save_key]) == 0 :
-                del(State.GoalDependency[save_key])
-                
-        self.plan1 = deque()
-        self.move_box = None
-        self.move_goal = None
+                del(State.GoalDependency[save_key])                
 
-    def FindDeadCells(self,how_many,box_from) :        
+    def FindDeadCells(self,how_many,box_from,to_free_cells) :        
         count = 0
         frontier = deque()
         frontier.append(box_from.location)
         frontier_set = set()
         frontier_set.add(box_from.location)
-        parkings = list()
+        dead_cells = deque()        
         
-        while len(frontier) > 0 and count < how_many :
-            
+        while len(frontier) > 0 and count < how_many :            
             cell = frontier.popleft()
-            if cell in State.DeadCells :
+            if cell not in to_free_cells :
                 count+= 1
-                parkings.append(cell)
+                dead_cells.append(cell)
             for leaf in State.Neighbours[cell] :
                 if leaf not in frontier_set :
                     frontier_set.add(leaf)
-                    frontier.append(leaf)
-            
-        return parkings
+                    frontier.append(leaf)            
+        return dead_cells
 
-    def PlanMoveBoxes(self,to_free_cells) :
-        
-        new_boxes = list()
+    def PlanMoveBoxes(self,to_free_cells) :        
+        new_boxes = deque()
         for box in self.request_boxes :
             plan_a_b = Plan(self.location,box.location)
             agent_has_plan_to_box = plan_a_b.CreateIntentionPlan(self.location,self.location)
@@ -437,18 +386,16 @@ class Agent:
     
         additional_locations = set()
         additional_locations.add(box.location)
-        additional_locations.add(self.location)
-        
-        parkings = self.FindDeadCells(len(self.request_boxes)+1,box)     
-        plan_b_c = Plan(box.location,parkings.pop())
+        additional_locations.add(self.location)        
+        dead_cells = self.FindDeadCells(len(self.request_boxes)+1,box,to_free_cells)     
+        plan_b_c = Plan(box.location,dead_cells.pop())
         box_has_plan_to_park = plan_b_c.CreateIntentionPlan(box.location,self.location)
         if box_has_plan_to_park :
             plan_b_c.plan.reverse()
             self.request_plan.extend(plan_a_b.plan)
             self.request_plan.extend(plan_b_c.plan)
         else :
-            return False,0
-        
+            return False,0        
         
         while len(self.request_boxes) > 0 :            
             for box in self.request_boxes :
@@ -460,12 +407,11 @@ class Agent:
                     new_boxes.append(box)
                     additional_locations.add(box.location)
                     self.request_boxes.remove(box)
-                    break
-                    
+                    break                    
             if len(plan_a_b.plan) == 0 :
                 return True,len(self.request_plan)
             
-            plan_b_c = Plan(box.location,parkings.pop())
+            plan_b_c = Plan(box.location,dead_cells.pop())
             box_has_plan_to_park = plan_b_c.CreateAlernativeIntentionPlan(box.location,additional_locations)
             if box_has_plan_to_park :
                 plan_b_c.plan.reverse()
@@ -473,23 +419,18 @@ class Agent:
                 self.request_plan.extend(plan_b_c.plan)
             else :
                 return True,len(self.request_plan)
-        
+            
         self.request_boxes = new_boxes
         return True,len(self.request_plan)
         
-        
-        
     def PlanAnotherPlace(self,to_free_cells,loc,frontier_set=set(),frontier=deque()) :        
         if loc not in to_free_cells :
-            return True        
-        
+            return True                
         leaves = State.Neighbours[loc]
-
         for leaf in leaves:
             if leaf not in self.frontier_set and leaf in State.FreeCells :
                 frontier.append(leaf)
                 frontier_set.add(leaf)                
-
         if len(frontier) == 0 :
             return False
         else:
@@ -498,11 +439,10 @@ class Agent:
                 if self.PlanAnotherPlace(to_free_cells,leaf,frontier_set,frontier):
                     self.request_plan.append(leaf)
                     return True           
-    
-    #make plan for request
-    def PlanRequest(self,requests) :
-        self.request_boxes = list()
-        paths = list()
+        
+    def PlanRequest(self,requests) :  #make plan for request
+        self.request_boxes = deque()
+        paths = set()
         for req in requests :
             if req.blocking_box is not None :
                 self.request_boxes.append(req.blocking_box)
@@ -518,18 +458,16 @@ class Agent:
         else :
             return self.PlanMoveBoxes(paths)
                             
-
     def AssignRequest(self,agent,request,blocking_box=None) :
         if request :
-            new_request = Request(blocking_box,self.request_plan)
+            new_request = Request(blocking_box,set(self.request_plan))
         else :
-            new_request = Request(blocking_box,self.plan1)
+            new_request = Request(blocking_box,set(self.plan1))
             
         if agent not in State.Requests.keys() :
-            State.Requests[agent] = list()
+            State.Requests[agent] = deque()
         State.Requests[agent].append(new_request)   
-         
-                
+                         
     #make a request to some agent because the current plan cannot be executed, agent could be blocked or box could be blocked        
     def MakeRequest(self,free_these_cells,request) :        
         pattern_box = re.compile("[A-Z]+")
@@ -546,33 +484,49 @@ class Agent:
                 agent = State.getAgentAgent(letter_or_num)
                 if len(agent.plan1) == 0:
                     self.AssignRequest(agent,request)
+   
+    def PullDecision(self) :
+        pull = False
+        agent_to = None
+        if len(self.plan2) > 0 :
+            next_start = self.plan2[0]
+            current_end = self.plan1[-1]
+            manhatten_dist = abs(next_start.x - current_end.x) + abs(next_start.y - current_end.y)
+            if manhatten_dist == 2 :
+                pull = True
+                if len(self.plan1) > 2 :
+                    agent_to = self.plan[1]
+                else :
+                    agent_to = self.plan2[0]        
+        return pull,agent_to
         
     def ExecuteDecision(self) :
         
-        if len(self.request_plan) > 0 :
+        if len(self.request_plan) > 0 :   #prioritise request
             return self.ExecuteRequest()
-            
+        
         cell1 = self.plan1.popleft()
         cell2 = self.plan1[0]  
         
-        action = self.NoOp()
-        #Move towards the box
-        if self.move_box.location != cell1 :
+        action = self.NoOp()        
+        if self.move_box.location != cell1 :  #Move towards the box
             action = self.Move(cell1)  
-        else:
-            #If next to next location is where box should be, then push
-            if cell2 != self.location :
+        else:            
+            if cell2 != self.location : #If next to next location is where box should be, then push
                 action = self.Push(self.move_box,cell2)
             else:
-                #if next to next location is agent's location, then pull
-                small_frontier = PriorityQueue()
-                for n in State.Neighbours[self.location]:
-                    if n in State.FreeCells and n != self.move_box.location :
-                        small_heur = -1 * (abs(n.x - self.move_goal.x) + abs(n.y - self.move_goal.y))
-                        small_frontier.put((small_heur, n))
-                if not small_frontier.empty():
-                    agent_to = small_frontier.get()[1]
-                    action = self.Pull(self.move_box, agent_to)                            
+                pull,agent_to = self.PullDecision() #check if rest of actions should be pull or push
+                if pull :
+                    action = self.Pull(self.move_box, agent_to)
+                else :
+                    small_frontier = PriorityQueue()
+                    for n in State.Neighbours[self.location]:
+                        if n in State.FreeCells and n != self.move_box.location :
+                            small_heur = -1 * (abs(n.x - self.move_goal.x) + abs(n.y - self.move_goal.y))
+                            small_frontier.put((small_heur, n))
+                    if not small_frontier.empty():
+                        agent_to = small_frontier.get()[1]
+                        action = self.Pull(self.move_box, agent_to)                            
         
         if self.move_box.location == self.move_goal :
             self.DeleteCells()
@@ -584,8 +538,7 @@ class Agent:
         if len(self.plan1) > 0 :
             self.plan1,self.plan2 = deque(),deque()
             self.move_box,self.move_goal,self.next_box,self.next_goal = None,None,None,None
-            
-            
+                        
         cell1 = self.request_plan.popleft()
         cell2 = self.request_plan[0]  
         

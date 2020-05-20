@@ -3,6 +3,7 @@
 Created on Wed Apr 15 21:55:26 2020
 @author :
 """
+from collections import deque
 
 class State :
     
@@ -15,7 +16,6 @@ class State :
     FreeCells = set() #Cells which are currently free .. {location(x,y)}
     MAX_ROW = 0 
     MAX_COL = 0
-    Paths = set()
     SingleAgent = False
     Requests = dict()
     
@@ -94,8 +94,8 @@ class State :
                 colors.add(agent.color)
                 unblocking_agents.add(agent)
             else :
-                agent.request_plan = list()
-                agent.request_boxes = list()
+                agent.request_plan = deque()
+                agent.request_boxes = deque()
                 agent.inform_agent = None
                 
             plan_lengths[agent_number] = State.MAX_COL*State.MAX_ROW

@@ -111,7 +111,6 @@ def SetUpObjects() :
     State.BoxAt = dict() 
     State.FreeCells = set() 
     State.GoalLocations = set()
-    State.Paths = set()
     
     locations = list()
     pattern_agent = re.compile("[0-9]+")
@@ -184,9 +183,7 @@ def MakeInitialPlan():
                     if agent_has_plan_to_box :
                         agent.boxes.add(box)
                         plan_a_b.plan.reverse()
-                        State.Plans[plan_a_b] = plan_a_b.plan
-                        for p in plan_a_b.plan :
-                            State.Paths.add(p)
+                        State.Plans[plan_a_b] = plan_a_b.plan                        
                         
                     if letter in State.GoalAt.keys() :
                         goals = State.GoalAt[letter]
@@ -203,9 +200,7 @@ def MakeInitialPlan():
                                     State.Plans[plan_g_b] = plan_g_b.plan
                                     
                                 plan_b_g.plan.reverse()
-                                State.Plans[plan_b_g] = plan_b_g.plan
-                                for p in plan_b_g.plan :
-                                    State.Paths.add(p)
+                                State.Plans[plan_b_g] = plan_b_g.plan                        
                                 
                             plan_a_g = Plan(agent.location,goal_location)
                             if plan_a_g not in State.GoalPaths.keys() :
@@ -237,12 +232,5 @@ def FindDependency() :
     del(State.GoalPaths)
     del(State.GoalAt)
     del(State.BoxAt)
-    
-def FindDeadCells() :
-    State.DeadCells = State.FreeCells.difference(State.Paths)
-    for agent in State.AgentAt :
-        if agent.location not in State.Paths :
-            State.DeadCells.add(agent.location)
-    
       
 #MAKE A BFS.. total path agent to box to goal         
