@@ -193,7 +193,7 @@ def MakeInitialPlan():
                             if box_has_plan_to_goal :
                                 box.goals.put((len(plan_b_g.plan),goal_location))
                                 if len(plan_b_g.plan) > 1 :
-                                    plan_g_b = Plan(goal_location,box.location)
+                                    plan_g_b = Plan(goal_location,box.location) #fix it
                                     plan_g_b.plan = deque(list(plan_b_g.plan)[1:])
                                     plan_g_b.plan.append(box.location)
                                     State.Plans[plan_g_b] = plan_g_b.plan

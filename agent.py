@@ -198,8 +198,8 @@ class Agent:
                     else :
                         goal_location = None
                                     
-                
-                box.goals = tmpQueue
+                while not tmpQueue.empty() :
+                    box.goals.put(tmpQueue.get())
                 
                 if goal_location is not None :                    
                     plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
@@ -256,7 +256,8 @@ class Agent:
                                 self.move_goal = goal_location
                                 break
                                                
-                    box.goals = tmpQueue
+                    while not tmpQueue.empty() :
+                        box.goals.put(tmpQueue.get())
  
         if self.move_box is None :
             self.move_box = save_box
@@ -305,7 +306,8 @@ class Agent:
                         else :
                             goal_location = None
                     
-                    box.goals = tmpQueue
+                    while not tmpQueue.empty() :
+                        box.goals.put(tmpQueue.get())
                 
                     if goal_location is not None :                    
                         plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
@@ -350,7 +352,8 @@ class Agent:
                     heur_goal = box.goals.get()
                     if heur_goal[1] != self.move_goal :
                         tmpQueue.put(heur_goal)
-                box.goals = tmpQueue
+                while not tmpQueue.empty() :
+                    box.goals.put(tmpQueue.get())
         
         #delete box from agent's box list
         new_set_of_boxes = set()
@@ -375,7 +378,8 @@ class Agent:
                 if heur_goal[1] == self.move_goal :
                     goal_yes = True                    
                 tmpQueue.put(heur_goal)
-            self.move_box.goals = tmpQueue
+            while not tmpQueue.empty() :
+                self.move_box.goals.put(tmpQueue.get())
 
         if goal_yes :
             self.DeleteCells()
@@ -396,7 +400,8 @@ class Agent:
                         State.Plans[plan_b_g] = plan_b_g.plan
                         tmpQueue.put((len(plan_b_g.plan),goal_location))
                         
-            self.move_box.goals = tmpQueue
+            while not tmpQueue.empty() :
+                self.move_box.goals.put(tmpQueue.get())
         
         #update next request
         if len(self.next_request) > 0 :
@@ -590,7 +595,7 @@ class Agent:
                     agent_to = self.request_plan[1]
                 else :
                     for n in State.Neighbours[self.move_goal] :
-                        if n in State.Neighbours[self.next_request[0]] :
+                        if n in State.Neighbours[next_start] and n in State.FreeCells :
                             agent_to = n  # if it is not free, then ?
                             break
                         
@@ -617,7 +622,8 @@ class Agent:
                 action = self.Push(self.move_box,cell2)
             else:
                 pull,agent_to = self.PullDecision() #check if rest of actions should be pull or push
-                if pull :
+                
+                if pull and len(set(State.Neighbours[agent_to]).intersection(State.FreeCells)) > 1:
                     if agent_to in State.FreeCells :
                         action = self.Pull(self.move_box, agent_to)
                     else :
@@ -691,7 +697,7 @@ class Agent:
                 action = self.Push(self.move_box,cell2)
             else:
                 pull,agent_to = self.PullRequest() #check if rest of actions should be pull or push
-                if pull :
+                if pull and len(set(State.Neighbours[agent_to]).intersection(State.FreeCells)) > 1:
                     if agent_to in State.FreeCells :
                         action = self.Pull(self.move_box, agent_to)
                     else :

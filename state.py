@@ -95,6 +95,7 @@ class State :
             agent = State.AgentAt[agent_number]
             if agent.color not in colors :
                 colors.add(agent.color)
+                agent.wait = False
             else :
                 agent.request_plan = deque()
                 agent.request_boxes = deque()
