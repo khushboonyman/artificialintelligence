@@ -29,7 +29,8 @@ def TranslateToDir(locfrom, locto):
            
 class Agent:
     def __init__(self, location, color, number, plan1=deque(), plan2 = deque(),move_box = None, move_goal = None, 
-        request_plan = deque(), boxes = set(), next_box = None, next_goal = None, request_boxes = deque(), next_request = deque()):
+        request_plan = deque(), boxes = set(), next_box = None, next_goal = None, request_boxes = deque(), 
+        next_request = deque(), wait=False):
         self.location = location
         self.color = color
         self.number = number
@@ -43,20 +44,21 @@ class Agent:
         self.boxes = boxes
         self.next_request = next_request
         self.request_boxes = request_boxes
+        self.wait = wait
         
     def __str__(self):
         return str(self.location) + ' Col: ' + self.color + ' Num : ' + self.number
 
     def __hash__(self):
-        return hash(self.number)
+        return hash(str(self))
     
     def __eq__(self, other):
-        if self.number == other.number :
+        if self.number == other.number and self.color == other.color and self.location == other.location :
             return True
         return False
     
     def __ne__(self, other):
-        if self.number != other.number :
+        if self.number != other.number or self.color != other.color or self.location != other.location :
             return True
         return False
     
@@ -431,6 +433,8 @@ class Agent:
 
     def PlanMoveBoxes(self,to_free_cells) :        
         new_boxes = deque()
+        self.request_plan = deque()
+        
         for box in self.request_boxes :
             plan_a_b = Plan(self.location,box.location)
             agent_has_plan_to_box = plan_a_b.CreateIntentionPlan(self.location,self.location)
@@ -492,7 +496,7 @@ class Agent:
             return True                
         leaves = State.Neighbours[loc]
         for leaf in leaves:
-            if leaf not in self.frontier_set and leaf in State.FreeCells :
+            if leaf not in frontier_set and leaf in State.FreeCells :
                 frontier.append(leaf)
                 frontier_set.add(leaf)                
         if len(frontier) == 0 :
@@ -514,6 +518,7 @@ class Agent:
                 paths = req.free_these_cells
         
         if len(self.request_boxes) == 0 :
+            self.request_plan = deque()
             if self.PlanAnotherPlace(paths,self.location) :
                 self.request_plan.reverse()
                 return True,len(self.request_plan)
@@ -543,11 +548,18 @@ class Agent:
                 agents,blocking_box = State.getBoxAgent(letter_or_num,cell)
                 if len(agents) > 0 and blocking_box is not None :
                     for agent in agents :
-                        self.AssignRequest(agent,request,blocking_box)                                                                        
+                        if blocking_box not in agent.request_boxes and blocking_box != agent.move_box and len(agent.request_plan) == 0 :
+                            self.AssignRequest(agent,request,blocking_box)
+                if blocking_box is None or blocking_box.color != self.color :
+                    self.wait = True
             elif pattern_agent.fullmatch(letter_or_num) is not None:
                 agent = State.getAgentAgent(letter_or_num)
-                if len(agent.plan1) == 0:
+                if (len(agent.plan1) == 0 or agent.wait) and len(agent.request_plan) == 0:
+                    agent.wait = False
                     self.AssignRequest(agent,request)
+                else :
+                    self.wait = True
+                
    
     def PullDecision(self) :
         pull = False
@@ -561,8 +573,8 @@ class Agent:
                     agent_to = self.plan1[1]
                 else :
                     for n in State.Neighbours[self.move_goal] :
-                        if n in State.Neighbours[self.plan2[0]] :
-                            agent_to = n  # if it is not free, then ?
+                        if n in State.Neighbours[next_start] and n in State.FreeCells :
+                            agent_to = n
                             break
         return pull,agent_to
         
@@ -589,10 +601,15 @@ class Agent:
         if len(self.request_plan) > 0 :   #prioritise request
             return self.ExecuteRequest()
         
+        action = self.NoOp()
+        
+        if self.wait :
+            return action
+                
         cell1 = self.plan1.popleft()
         cell2 = self.plan1[0]  
         
-        action = self.NoOp()        
+             
         if self.move_box.location != cell1 :  #Move towards the box
             action = self.Move(cell1)  
         else:            
@@ -639,22 +656,37 @@ class Agent:
         self.move_goal = self.request_plan[-1]
         
     def ExecuteRequest(self) :
-                        
+        
+        action = self.NoOp()
+        if self.wait :
+            return action
+        
         if len(self.plan1) > 0 :
-            self.move_box = self.request_boxes.popleft()
-            self.FindRequestGoal()
+            if len(self.request_boxes) > 0 :
+                self.move_box = self.request_boxes.popleft()
+                self.FindRequestGoal()
+            else :
+                old_location = self.location
+                cell1 = self.request_plan.popleft()
+                action = self.Move(cell1)
+                if action != self.NoOp() :
+                    self.plan1.insert(0,old_location)
+                return action
         
         if self.move_goal is None and self.move_box is not None :
             self.FindRequestGoal()
             
         cell1 = self.request_plan.popleft()
-        cell2 = self.request_plan[0]  
         
-        action = self.NoOp()
+        if self.move_box is None :
+            action = self.Move(cell1)
+            return action
+        
         #Move towards the box
         if self.move_box.location != cell1 :  #Move towards the box
             action = self.Move(cell1)  
-        else:            
+        else:
+            cell2 = self.request_plan[0]             
             if cell2 != self.location : #If next to next location is where box should be, then push
                 action = self.Push(self.move_box,cell2)
             else:
@@ -707,7 +739,10 @@ class Agent:
                 ip_made = self.MakeAnyIntentionPlan() #see if any plan can be made        
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=False) #make request to agent whose box blocks the current agent
-                    
+        else :
+            if self.wait :
+                self.wait = False
+                
     def CheckRequestPlan(self):          
         #find if any desire plan path is not free
             
@@ -721,3 +756,6 @@ class Agent:
             ip_made = self.MakeCurrentIntentionPlan(request=True) #first try with chosen box and goal        
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=True) #make request to agent whose box blocks the current agent
+        else :
+            if self.wait :
+                self.wait = False

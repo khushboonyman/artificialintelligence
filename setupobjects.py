@@ -44,8 +44,6 @@ def ReadHeaders(messages):
     if line == '#levelname':
         line = Readlines(messages)
         ToServer('#Level name is ' + line)
-        if line[0] == 'S' :
-            State.SingleAgent = True
     else:
         HandleError('Level name is missing')
 
@@ -147,7 +145,8 @@ def SetUpObjects() :
         locations.append(locations_of_a_row)
         
     del(State.goal_level)
-    
+    if len(State.AgentAt) == 1 :
+        State.SingleAgent = True
     
     for row in range(1, State.MAX_ROW - 1):
         START_COL = State.current_level[row].index('+')+1
