@@ -327,30 +327,35 @@ class Agent:
                                 min_b_g_length = len(plan_b_g.plan)
     
     #delete box goal combinations when box is on the goal location                                
-    def DeleteCells(self) :
-        save_key = None        
-        #Delete the box that achieved goal
-        State.BoxAt[self.move_box.letter].remove(self.move_box)
-        if len(State.BoxAt[self.move_box.letter]) == 0 :
-            del(State.BoxAt[self.move_box.letter])
-            State.color_dict[self.color].remove(self.move_box.letter)
-            if len(State.color_dict[self.color]) == 0 :
-                del(State.color_dict[self.color])        
-        #Delete the goal that now has a valid box        
-        State.GoalAt[self.move_box.letter].remove(self.move_goal)
-        if len(State.GoalAt[self.move_box.letter]) == 0 :
-            del(State.GoalAt[self.move_box.letter])        
-        #Find the goals that have dependency on the goal that has been reached
-        save_keys = deque()
+    def DeleteCells(self) :  
+        #update goal dependencies
+        dependents = deque() #Find the goals that are dependent
         for key,value in State.GoalDependency.items() :
-            if self.move_goal in State.GoalDependency[key] :
-                save_keys.append(key)                
-        #Delete the dependent goals from the dictionary and remove the key if there are no more values remaining
-        while len(save_keys) != 0 :
-            save_key = save_keys.pop() 
-            State.GoalDependency[save_key].remove(self.move_goal)
-            if len(State.GoalDependency[save_key]) == 0 :
-                del(State.GoalDependency[save_key])                
+            if self.move_goal in value :
+                dependents.append(key)                        
+        while len(dependents) != 0 : #delete the dependee goal if in satellite data and remove dependent if no more dependee
+            dependent = dependents.pop() 
+            State.GoalDependency[dependent].remove(self.move_goal)
+            if len(State.GoalDependency[dependent]) == 0 :
+                del(State.GoalDependency[dependent])    
+        
+        #delete box from agent's box list
+        self.boxes.remove(self.move_box)
+        
+        #delete box from other agent's box list
+        for agent in State.AgentAt :
+            if agent != self and agent.color == self.color :
+                agent.boxes.remove(self.move_box)
+                
+        #delete goal from boxes
+        for box in self.boxes :
+            tmpQueue = PriorityQueue()
+            while not box.goals.empty() :            
+                heur_goal = box.goals.get()
+                if heur_goal[1] != self.move_goal :
+                    tmpQueue.put(heur_goal)
+            box.goals = tmpQueue        
+                    
 
     def FindDeadCells(self,how_many,box_from,to_free_cells) :        
         count = 0
@@ -490,14 +495,15 @@ class Agent:
         agent_to = None
         if len(self.plan2) > 0 :
             next_start = self.plan2[0]
-            current_end = self.plan1[-1]
-            manhatten_dist = abs(next_start.x - current_end.x) + abs(next_start.y - current_end.y)
-            if manhatten_dist == 2 :
+            if next_start not in self.plan1 and next_start != self.location :
                 pull = True
-                if len(self.plan1) > 2 :
+                if len(self.plan1) > 1 :
                     agent_to = self.plan[1]
                 else :
-                    agent_to = self.plan2[0]        
+                    for n in State.Neighbours[self.move_goal] :
+                        if n in State.Neighbours[self.plan2[0]] :
+                            agent_to = n  # if it is not free, then ?
+                            break
         return pull,agent_to
         
     def ExecuteDecision(self) :
@@ -517,7 +523,12 @@ class Agent:
             else:
                 pull,agent_to = self.PullDecision() #check if rest of actions should be pull or push
                 if pull :
-                    action = self.Pull(self.move_box, agent_to)
+                    if agent_to in State.FreeCells :
+                        action = self.Pull(self.move_box, agent_to)
+                    else :
+                        free_these_cells = set()
+                        free_these_cells.add(agent_to)
+                        self.MakeRequest(free_these_cells,request=False)
                 else :
                     small_frontier = PriorityQueue()
                     for n in State.Neighbours[self.location]:

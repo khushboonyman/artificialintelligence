@@ -7,19 +7,24 @@ from collections import deque
 
 class State :
     
-    current_level = list() #shows how the level looks currently        
+    #to be updated whenever box reaches goal       
     GoalDependency = dict() #dictionary of dependent goal locations .. {location : set(location)}    
-    DeadCells = set()
-    Neighbours = dict() #dictionary of non-wall neighbours for each location .. {location : list(location)}
-    Plans = dict() #set containing path between two locations .. {start,end : list(location)}    
     AgentAt = list() #all agents .. list(Agent(location,color,number,plan))
-    FreeCells = set() #Cells which are currently free .. {location(x,y)}
+    
+    #getting updated constantly
+    Plans = dict() #set containing path between two locations .. {start,end : list(location)}        
+    FreeCells = set() #cells which are currently free .. {location(x,y)}
+    Requests = dict() #broadcast requests         
+    current_level = list() #shows how the level looks currently
+    
+    #one time but save 
+    SingleAgent = False #check if its a single agent level 
+    Neighbours = dict() #dictionary of non-wall neighbours for each location .. {location : list(location)}
     MAX_ROW = 0 
     MAX_COL = 0
-    SingleAgent = False
-    Requests = dict()
+    color_dict = dict() #stores mapping of colors to numbers and letters
     
-    color_dict = dict()
+    #one time but delete    
     goal_level = list() #shows how the goal level looks .. one time
     GoalLocations = set() #all goal locations .. {location}  .. one time
     GoalPaths = dict() #stores only agent to goal paths to create dependencies

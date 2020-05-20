@@ -102,9 +102,9 @@ if __name__ == '__main__':
         if len(State.Requests) != 0 :
             State.Bidding()
 ############################################################################################################        
-        #for agent in State.AgentAt :
-        #    agent_action = agent.ExecuteDecision()            
-        #    combined_actions.append(agent_action)
+        for agent in State.AgentAt :
+            agent_action = agent.ExecuteDecision()            
+            combined_actions.append(agent_action)
         
         if combined_actions.count(no_op) == len(combined_actions) :
             break
