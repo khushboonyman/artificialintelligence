@@ -44,7 +44,7 @@ def ReadHeaders(messages):
     if line == '#levelname':
         line = Readlines(messages)
         ToServer('#Level name is ' + line)
-        if line[:2] == 'SA' :
+        if line[0] == 'S' :
             State.SingleAgent = True
     else:
         HandleError('Level name is missing')

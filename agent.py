@@ -327,7 +327,8 @@ class Agent:
                                 min_b_g_length = len(plan_b_g.plan)
     
     #delete box goal combinations when box is on the goal location                                
-    def DeleteCells(self) :  
+    def DeleteCells(self) :
+        self.plan1 = deque()
         #update goal dependencies
         dependents = deque() #Find the goals that are dependent
         for key,value in State.GoalDependency.items() :
@@ -339,23 +340,27 @@ class Agent:
             if len(State.GoalDependency[dependent]) == 0 :
                 del(State.GoalDependency[dependent])    
         
+        #delete goal from boxes
+        for box in self.boxes :
+            if box != self.move_box :                
+                tmpQueue = PriorityQueue()
+                while not box.goals.empty() :            
+                    heur_goal = box.goals.get()
+                    if heur_goal[1] != self.move_goal :
+                        tmpQueue.put(heur_goal)
+                box.goals = tmpQueue
+        
         #delete box from agent's box list
-        self.boxes.remove(self.move_box)
+        new_set_of_boxes = set()
+        for box in self.boxes :
+            if box != self.move_box :
+                new_set_of_boxes.add(box)
+        self.boxes = new_set_of_boxes
         
         #delete box from other agent's box list
         for agent in State.AgentAt :
             if agent != self and agent.color == self.color :
-                agent.boxes.remove(self.move_box)
-                
-        #delete goal from boxes
-        for box in self.boxes :
-            tmpQueue = PriorityQueue()
-            while not box.goals.empty() :            
-                heur_goal = box.goals.get()
-                if heur_goal[1] != self.move_goal :
-                    tmpQueue.put(heur_goal)
-            box.goals = tmpQueue        
-                    
+                agent.boxes = new_set_of_boxes                    
 
     def FindDeadCells(self,how_many,box_from,to_free_cells) :        
         count = 0
@@ -367,13 +372,17 @@ class Agent:
         
         while len(frontier) > 0 and count < how_many :            
             cell = frontier.popleft()
-            if cell not in to_free_cells :
-                count+= 1
-                dead_cells.append(cell)
-            for leaf in State.Neighbours[cell] :
-                if leaf not in frontier_set :
-                    frontier_set.add(leaf)
-                    frontier.append(leaf)            
+            if cell != self.location :
+                if cell not in to_free_cells :
+                    count += 1
+                    dead_cells.append(cell)
+                for leaf in State.Neighbours[cell] :
+                    if leaf not in frontier_set :
+                        frontier_set.add(leaf)
+                        frontier.append(leaf)
+                    
+        if count == how_many - 1 :
+            dead_cells.append(self.location)
         return dead_cells
 
     def PlanMoveBoxes(self,to_free_cells) :        
@@ -392,8 +401,9 @@ class Agent:
         additional_locations = set()
         additional_locations.add(box.location)
         additional_locations.add(self.location)        
-        dead_cells = self.FindDeadCells(len(self.request_boxes)+1,box,to_free_cells)     
-        plan_b_c = Plan(box.location,dead_cells.pop())
+        dead_cells = self.FindDeadCells(len(self.request_boxes)+1,box,to_free_cells)
+        dead_cell = dead_cells.pop()
+        plan_b_c = Plan(box.location,dead_cell)
         box_has_plan_to_park = plan_b_c.CreateIntentionPlan(box.location,self.location)
         if box_has_plan_to_park :
             plan_b_c.plan.reverse()
@@ -416,7 +426,8 @@ class Agent:
             if len(plan_a_b.plan) == 0 :
                 return True,len(self.request_plan)
             
-            plan_b_c = Plan(box.location,dead_cells.pop())
+            dead_cell = dead_cells.pop()
+            plan_b_c = Plan(box.location,dead_cell)
             box_has_plan_to_park = plan_b_c.CreateAlernativeIntentionPlan(box.location,additional_locations)
             if box_has_plan_to_park :
                 plan_b_c.plan.reverse()

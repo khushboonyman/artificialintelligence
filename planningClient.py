@@ -75,8 +75,8 @@ if __name__ == '__main__':
                     agent.MakeDesirePlan()
                 else :
                     agent.plan1 = agent.plan2
-                    agent.move_box1 = agent.move_box2
-                    agent.move_goal1 = agent.move_goal2
+                    agent.move_box = agent.next_box
+                    agent.move_goal = agent.next_goal
                     agent.FindNextBox()
         
         while True :
@@ -103,7 +103,9 @@ if __name__ == '__main__':
             State.Bidding()
 ############################################################################################################        
         for agent in State.AgentAt :
-            agent_action = agent.ExecuteDecision()            
+            agent_action = no_op
+            if len(agent.plan1) > 0 or len(agent.request_plan) > 0 :
+                agent_action = agent.ExecuteDecision()            
             combined_actions.append(agent_action)
         
         if combined_actions.count(no_op) == len(combined_actions) :

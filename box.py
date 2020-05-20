@@ -20,7 +20,7 @@ class Box:
         return hash(str(self))
     
     def __eq__(self, other):
-        if self.location == other.location and self.letter == other.letter and self.color == other.color:
+        if self.location == other.location and self.letter == other.letter and self.color == other.color :
             return True
         else:
             return False
