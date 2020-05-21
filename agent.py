@@ -393,10 +393,10 @@ class Agent:
                             plan_b_g.plan = State.Plans[plan_b_g]
                         except Exception as ex :
                             plan_b_g.CreateBeliefPlan()                      
-                        if len(plan_b_g.plan) > 0 :
-                            plan_b_g.plan.reverse()
-                            State.Plans[plan_b_g] = plan_b_g.plan
-                            tmpQueue.put((len(plan_b_g.plan),goal_location))
+                            if len(plan_b_g.plan) > 0 :
+                                plan_b_g.plan.reverse()
+                                State.Plans[plan_b_g] = plan_b_g.plan
+                        tmpQueue.put((len(plan_b_g.plan),goal_location))
                                 
                     while not tmpQueue.empty() :
                         box.goals.put(tmpQueue.get())
