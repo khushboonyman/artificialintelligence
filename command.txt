@@ -1,1 +1,1 @@
-java -jar server.jar -c "python MultiAgentSystem/planningClient.py" -l "MultiAgentSystem/levels/SAD1.lvl" -g
+java -jar server.jar -c "python planningClient.py --server=True" -l "levels/levels2020/dontwork/safootsteps.lvl" -g
