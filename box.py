@@ -7,11 +7,11 @@ import location
 from queue import PriorityQueue
 
 class Box:
-    def __init__(self, location, color, letter, goals = PriorityQueue()):
+    def __init__(self, location, color, letter):
         self.location = location
         self.color = color
         self.letter = letter
-        self.goals = goals
+        self.goals = PriorityQueue()
         
     def __str__(self):
         return str(self.location) + ' Col: ' + self.color + ' Let : ' + self.letter

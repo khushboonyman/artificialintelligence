@@ -43,9 +43,12 @@ class Plan():
     def Heuristic(self, location): #we need to improve the heuristic
         return abs(self.end.x - location.x) + abs(self.end.y - location.y)
         
-    def CreatePath(self,came_from) :
-        current = self.end
+    def CreatePath(self,came_from,intention=False) :
         self.plan = deque()
+        if intention and self.end not in State.FreeCells :
+            return
+        current = self.end
+            
         while current != self.start:
             self.plan.append(current)
             if current in came_from.keys() :
@@ -100,7 +103,7 @@ class Plan():
                         frontier.put((priority,n))
                         came_from[n] = current
     
-        self.CreatePath(came_from)
+        self.CreatePath(came_from,True)
 #planning a request
     def CreateAlternativeIntentionPlan(self,valid_locations) :
         frontier = PriorityQueue()
@@ -123,6 +126,6 @@ class Plan():
                         frontier.put((priority,n))
                         came_from[n] = current
     
-        self.CreatePath(came_from) 
+        self.CreatePath(came_from,True) 
     
 

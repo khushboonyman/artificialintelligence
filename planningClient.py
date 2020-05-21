@@ -42,7 +42,7 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/levels2020/dontwork/SAfootsteps.lvl', 'r')
+            server_messages = open('levels/levels2020/dontwork/MACoronai.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
@@ -64,7 +64,6 @@ if __name__ == '__main__':
     #FindDeadCells()
     no_op = 'NoOp'
 ###########################################one time execution###################################################    
-    
     """This gets called until every goal is reached"""
     
     #while len(State.GoalAt) > 0 and count < 1:
@@ -114,8 +113,6 @@ if __name__ == '__main__':
         
         execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely    
         ToServer(execute)
-        #if agent.move_box.letter == 'I' and len(agent.request_plan)== 0  :
-        #    ToServer('# now we are here ')
                      
         if globals.server :
             step_succeed = FromServer() #if you want to see server's response, print with a #                

@@ -28,23 +28,21 @@ def TranslateToDir(locfrom, locto):
             return 'S'
            
 class Agent:
-    def __init__(self, location, color, number, plan1=deque(), plan2 = deque(),move_box = None, move_goal = None, 
-        request_plan = deque(), boxes = set(), next_box = None, next_goal = None, request_boxes = deque(), 
-        next_request = deque(), wait=False):
+    def __init__(self, location, color, number) :
         self.location = location
         self.color = color
         self.number = number
-        self.plan1 = plan1
-        self.plan2 = plan2
-        self.move_box = move_box
-        self.move_goal = move_goal
-        self.next_box = next_box
-        self.next_goal = next_goal
-        self.request_plan = request_plan
-        self.boxes = boxes
-        self.next_request = next_request
-        self.request_boxes = request_boxes
-        self.wait = wait
+        self.plan1 = deque()
+        self.plan2 = deque()
+        self.move_box = None
+        self.move_goal = None
+        self.next_box = None
+        self.next_goal = None
+        self.request_plan = deque()
+        self.boxes = set()
+        self.next_request = deque()
+        self.request_boxes = deque()
+        self.wait = False
         
     def __str__(self):
         return str(self.location) + ' Col: ' + self.color + ' Num : ' + self.number
@@ -496,22 +494,38 @@ class Agent:
         self.request_boxes = new_boxes
         return True,len(self.request_plan)
         
-    def PlanAnotherPlace(self,to_free_cells,loc,frontier_set=set(),frontier=deque()) :        
-        if loc not in to_free_cells :
-            return True                
-        leaves = State.Neighbours[loc]
-        for leaf in leaves:
-            if leaf not in frontier_set and leaf in State.FreeCells :
-                frontier.append(leaf)
-                frontier_set.add(leaf)                
-        if len(frontier) == 0 :
-            return False
-        else:
-            while len(frontier) > 0:
-                leaf = frontier.popleft()
-                if self.PlanAnotherPlace(to_free_cells,leaf,frontier_set,frontier):
-                    self.request_plan.append(leaf)
-                    return True           
+    def PlanAnotherPlace(self,to_free_cells) : 
+        frontier = deque()
+        frontier.append(self.location)
+        came_from = {}
+        frontier_set = set()
+        frontier_set.add(self.location)
+        came_from[self.location] = None
+        end_loc = None
+        
+        while len(frontier) > 0 :
+            current = frontier.popleft()        
+            if current not in to_free_cells :
+                end_loc = current
+                break        
+            for n in State.Neighbours[current]:
+                if n in State.FreeCells and n not in frontier_set :
+                    frontier.append(n)
+                    frontier_set.add(n)
+                    came_from[n] = current
+        
+        self.request_plan = deque()
+        
+        current = end_loc 
+        
+        while current != self.location :
+            self.request_plan.append(current)
+            if current in came_from.keys() :
+                current = came_from[current]
+            else :
+                self.request_plan = deque()
+                break
+        
         
     def PlanRequest(self,requests) :  #make plan for request
         self.request_boxes = deque()
@@ -523,8 +537,8 @@ class Agent:
                 paths = req.free_these_cells
         
         if len(self.request_boxes) == 0 :
-            self.request_plan = deque()
-            if self.PlanAnotherPlace(paths,self.location) :
+            self.PlanAnotherPlace(paths)
+            if len(self.request_plan) > 0 :
                 self.request_plan.reverse()
                 return True,len(self.request_plan)
             else :
@@ -680,26 +694,12 @@ class Agent:
         if len(self.plan1) > 0 :
             if len(self.request_boxes) > 0 :
                 self.move_box = self.request_boxes.popleft()
-                self.FindRequestGoal()
-            else :
-                old_location = self.location
-                cell1 = self.request_plan.popleft()
-                action = self.Move(cell1)
-                if action != self.NoOp() :
-                    self.plan1.insert(0,old_location)
-                return action
-        
-        #if self.move_goal is None and self.move_box is not None :
-        #    self.FindRequestGoal()
+                self.FindRequestGoal()  
             
         cell1 = self.request_plan.popleft()
-        
-        if self.move_box is None :
-            action = self.Move(cell1)
-            return action
-        
+            
         #Move towards the box
-        if self.move_box.location != cell1 :  #Move towards the box
+        if self.move_box is None or self.move_box.location != cell1 :  #Move towards the box
             action = self.Move(cell1)  
         else:
             cell2 = self.request_plan[0]             

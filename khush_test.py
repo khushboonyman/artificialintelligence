@@ -27,13 +27,6 @@ for key,value in State.GoalPaths.items() :
     for v in value :
         print(v)
 
-for cells in State.DeadCells :
-    if State.current_level[cells.x][cells.y] == ' ' or State.current_level[cells.x][cells.y] == '0'  :
-        State.current_level[cells.x] = State.current_level[cells.x][:cells.y]+'*'+State.current_level[cells.x][cells.y+1:] 
-        
-l = Location(2,2)
-for n in State.Neighbours[l] :
-    print(n)
     
 for agent in State.AgentAt :
     print('agent'+str(agent))

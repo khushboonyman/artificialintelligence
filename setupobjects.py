@@ -18,6 +18,7 @@ from plan import *
 from error import *
 import sys
 import re
+from queue import PriorityQueue
 
 #global variables
 global limit, no_action  #if running from server or IDE
@@ -176,7 +177,7 @@ def MakeInitialPlan():
             if letter in State.BoxAt.keys() :  
                 boxes = State.BoxAt[letter]
                 for box in boxes :
-                    box.goals = PriorityQueue()
+                    #box.goals = PriorityQueue()
                     plan_a_b = Plan(agent.location, box.location) # Plan for the agent to reach box
                     plan_a_b.CreateBeliefPlan()
                     if len(plan_a_b.plan) > 0 :                        
@@ -213,7 +214,8 @@ def MakeInitialPlan():
                                                     if plan_new_a_g not in State.GoalPaths.keys() :
                                                         plan_new_a_g.plan = deque(tmp_list[:index])
                                                         plan_new_a_g.plan.append(p)
-                                                        State.GoalPaths[plan_new_a_g] = plan_new_a_g.plan                                            
+                                                        State.GoalPaths[plan_new_a_g] = plan_new_a_g.plan   
+
                         
 
 def FindDependency() :
