@@ -101,7 +101,8 @@ class State :
                 agent.request_boxes = deque()
             
             plan_lengths[agent_number] = State.MAX_COL*State.MAX_ROW
-            del(State.Requests[agent])
+        
+        State.Requests.clear()
         
                 
             

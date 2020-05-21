@@ -4,10 +4,10 @@ if os.name == "posix":
     print(os.system("uname -a"))
 
 basepath = os.path.dirname(os.path.realpath(__file__))
-#os.chdir(basepath + "/levels/AlexTested")
+os.chdir(basepath + "/levels/levels2020")
 #os.chdir(basepath + "/levels/competition_levelsSP17")
 #os.chdir(basepath + "/levels/competition_levelsSP18")
-os.chdir(basepath + "/levels/untested")
+#os.chdir(basepath + "/levels/untested")
 
 tests = []
 for file in glob.glob("*.lvl"):
@@ -19,7 +19,7 @@ total = succeeded = 0
 not_solved = []
 for test in tests:
     total += 1
-    stream = os.popen('java -jar server.jar -l levels/untested/' + test + ' -c "python planningClient.py --server=True" -t 300')
+    stream = os.popen('java -jar server.jar -l levels/levels2020/' + test + ' -c "python planningClient.py --server=True" -t 300')
     #stream = os.popen('java -jar server.jar -l levels/competition_levelsSP17/' + test + ' -c "python planningClient.py --server=True" -t 300')
     #stream = os.popen('java -jar server.jar -l levels/competition_levelsSP18/' + test + ' -c "python planningClient.py --server=True" -t 300')
 	#stream = os.popen('java -jar server.jar -l levels/untested/' + test + ' -c "python planningClient.py --server=True" -t 300')
