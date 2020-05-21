@@ -349,6 +349,8 @@ class Agent:
                 while not tmpQueue.empty() :
                     box.goals.put(tmpQueue.get())
         
+        if self.move_goal in State.GoalLocations :
+            State.GoalLocations.remove(self.move_goal)   
         #delete box from agent's box list
         new_set_of_boxes = set()
         for box in self.boxes :
@@ -359,12 +361,17 @@ class Agent:
         #delete box from other agent's box list
         for agent in State.AgentAt :
             if agent != self and agent.color == self.color :
-                agent.boxes = new_set_of_boxes                    
+                agent.boxes = new_set_of_boxes
+                if agent.next_box is not None and agent.next_box == self.move_box :
+                    agent.next_box = None
+                    agent.next_goal = None
+                    agent.plan2 = deque()
+        
 
     #delete box goal combinations when box is on the goal location                                
     def UpdateCells(self) :
         #check if it was a goal the box was moved to
-                     
+                    
         goal_yes = False
         if self.move_goal in State.GoalLocations :
             tmpQueue = PriorityQueue()
@@ -698,8 +705,7 @@ class Agent:
         #if self.move_goal is None and self.move_box is not None :
         #    self.FindRequestGoal()
             
-        cell1 = self.request_plan.popleft()
-        
+        cell1 = self.request_plan.popleft()       
         
         #Move towards the box
         if self.move_box is None or self.move_box.location != cell1 :  #Move towards the box
@@ -727,7 +733,7 @@ class Agent:
                         agent_to = small_frontier.get()[1]
                         action = self.Pull(self.move_box, agent_to)                             
         
-        if self.move_box.location == self.move_goal :
+        if self.move_box is not None and self.move_goal is not None and self.move_box.location == self.move_goal :
             self.UpdateCells()
         
         if action != self.NoOp() and len(self.plan1) > 0 :

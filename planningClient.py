@@ -42,7 +42,7 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/levels2020/dontwork/MACoronai.lvl', 'r')
+            server_messages = open('levels/levels2020/works/mathree.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
@@ -65,9 +65,9 @@ if __name__ == '__main__':
     no_op = 'NoOp'
 ###########################################one time execution###################################################    
     """This gets called until every goal is reached"""
-    
     #while len(State.GoalAt) > 0 and count < 1:
     while True :
+        cont = False
         for agent in State.AgentAt :
             if len(agent.plan1) == 0 and len(agent.request_plan) == 0 :
                 if len(agent.plan2) == 0 :
@@ -77,6 +77,9 @@ if __name__ == '__main__':
                     agent.move_box = agent.next_box
                     agent.move_goal = agent.next_goal
                     agent.FindNextBox()
+                    
+            if len(agent.plan1) != 0 or len(agent.request_plan) != 0 :
+                cont = True
         
         while True :
             conflict = False
@@ -108,9 +111,6 @@ if __name__ == '__main__':
                 agent_action = agent.ExecuteDecision()            
             combined_actions.append(agent_action)
         
-        if combined_actions.count(no_op) == len(combined_actions) :
-            break
-        
         execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely    
         ToServer(execute)
                      
@@ -128,6 +128,8 @@ if __name__ == '__main__':
                 execute = ';'.join(final_combined_actions)  #prepare joint actions of agents to run parallely    
                 ToServer(execute)         
         
+        if not cont :
+            break
 ######################################################################################################################    
     ToServer('#Memory used ' + str(memory.get_usage()) + ' MB')
 
