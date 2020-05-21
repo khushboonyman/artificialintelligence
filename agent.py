@@ -128,7 +128,7 @@ class Agent:
             plan_a_b.plan.reverse()
             plan_a_b_g.extend(plan_a_b.plan)
             plan_b_g = Plan(self.move_box.location, self.move_goal) # Plan for the box to reach goal            
-            plan_b_g.CreateIntentionPlan(self.location)
+            plan_b_g.CreateIntentionPlan(self.location,intention=True)
             if len(plan_b_g.plan) > 0 :
                 plan_b_g.plan.reverse()
                 plan_a_b_g.extend(plan_b_g.plan)
@@ -243,7 +243,7 @@ class Agent:
                         tmpQueue.put(heur_goal)
                         if goal_location not in State.GoalDependency.keys() :                        
                             plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
-                            plan_b_g.CreateIntentionPlan(self.location) 
+                            plan_b_g.CreateIntentionPlan(self.location,intention=True) 
                             if len(plan_b_g.plan) > 0 :
                                 plan_b_g.plan.reverse()
                                 plan_a_b_g.extend(plan_b_g.plan)
@@ -458,7 +458,7 @@ class Agent:
         
         dead_cell = dead_cells.pop()
         plan_b_c = Plan(box.location,dead_cell)
-        plan_b_c.CreateIntentionPlan(self.location)
+        plan_b_c.CreateIntentionPlan(self.location,intention=True)
         if len(plan_b_c.plan) > 0 :
             plan_b_c.plan.reverse()
             self.request_plan.extend(plan_a_b.plan)
@@ -483,7 +483,7 @@ class Agent:
             
             dead_cell = dead_cells.pop()
             plan_b_c = Plan(box.location,dead_cell)
-            plan_b_c.CreateAlternativeIntentionPlan(additional_locations)
+            plan_b_c.CreateAlternativeIntentionPlan(additional_locations,intention=True)
             if len(plan_b_c.plan) > 0 :
                 plan_b_c.plan.reverse()
                 self.request_plan.extend(plan_a_b.plan)
@@ -694,10 +694,13 @@ class Agent:
         if len(self.plan1) > 0 :
             if len(self.request_boxes) > 0 :
                 self.move_box = self.request_boxes.popleft()
-                self.FindRequestGoal()  
+                self.FindRequestGoal()
+        #if self.move_goal is None and self.move_box is not None :
+        #    self.FindRequestGoal()
             
         cell1 = self.request_plan.popleft()
-            
+        
+        
         #Move towards the box
         if self.move_box is None or self.move_box.location != cell1 :  #Move towards the box
             action = self.Move(cell1)  
