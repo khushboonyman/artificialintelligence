@@ -734,7 +734,8 @@ class Agent:
             return
         
         not_free_cells = set(self.plan1).difference(State.FreeCells)
-        not_free_cells.discard(self.move_box.location)
+        if self.move_box is not None :
+            not_free_cells.discard(self.move_box.location)
         not_free_cells.discard(self.location)
     
         #while replanning, make intentional plan
@@ -753,7 +754,8 @@ class Agent:
         #find if any desire plan path is not free
             
         not_free_cells = set(self.request_plan).difference(State.FreeCells)
-        not_free_cells.discard(self.move_box.location)
+        if self.move_box is not None :
+            not_free_cells.discard(self.move_box.location)
         not_free_cells.discard(self.location)
     
         #while replanning, make intentional plan
