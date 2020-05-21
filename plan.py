@@ -53,6 +53,7 @@ class Plan():
             else :
                 self.plan = deque()
                 return    
+        State.Paths.update(set(self.plan))
         
     #while finding a plan, relax the preconditions .. make A* instead .. 
     def CreateBeliefPlan(self):

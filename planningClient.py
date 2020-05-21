@@ -114,7 +114,9 @@ if __name__ == '__main__':
         
         execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely    
         ToServer(execute)
-                
+        if agent.move_box.letter == 'I' :
+            ToServer('# now we are here ')
+                     
         if globals.server :
             step_succeed = FromServer() #if you want to see server's response, print with a #                
             result = step_succeed.rstrip().split(';')

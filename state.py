@@ -16,6 +16,7 @@ class State :
     FreeCells = set() #cells which are currently free .. {location(x,y)}
     Requests = dict() #broadcast requests         
     current_level = list() #shows how the level looks currently
+    Paths = set()
     
     #one time but save 
     SingleAgent = False #check if its a single agent level 
