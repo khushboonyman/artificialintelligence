@@ -124,14 +124,14 @@ class Agent:
     def MakeCurrentIntentionPlan(self,request) :
         plan_a_b_g = deque()
         plan_a_b = Plan(self.location, self.move_box.location) # Plan for the agent to reach box
-        agent_has_plan_to_box = plan_a_b.CreateIntentionPlan(self.location,self.location)
+        plan_a_b.CreateIntentionPlan(self.location)
         
-        if agent_has_plan_to_box :
+        if len(plan_a_b.plan) > 0 :
             plan_a_b.plan.reverse()
             plan_a_b_g.extend(plan_a_b.plan)
             plan_b_g = Plan(self.move_box.location, self.move_goal) # Plan for the box to reach goal            
-            box_has_plan_to_goal = plan_b_g.CreateIntentionPlan(self.move_box.location,self.location)
-            if box_has_plan_to_goal :
+            plan_b_g.CreateIntentionPlan(self.location)
+            if len(plan_b_g.plan) > 0 :
                 plan_b_g.plan.reverse()
                 plan_a_b_g.extend(plan_b_g.plan)
                 if request :
@@ -175,15 +175,14 @@ class Agent:
             #if plan was found initially
             try :
                 plan_a_b.plan = State.Plans[plan_a_b]
-                agent_has_plan_to_box = True
             except Exception as ex :
-                agent_has_plan_to_box = plan_a_b.CreateBeliefPlan(self.location)                        
-                if agent_has_plan_to_box :
+                plan_a_b.CreateBeliefPlan()                        
+                if len(plan_a_b.plan) > 0 :
                     plan_a_b.plan.reverse()
                     State.Plans[plan_a_b] = plan_a_b.plan
                 #plan_a_b.plan = State.Plans[plan_a_b] 
             plan_a_b_g = deque()    
-            if agent_has_plan_to_box :
+            if len(plan_a_b.plan) > 0 :
                 plan_a_b_g.extend(plan_a_b.plan)
                 
                 goal_location = None
@@ -206,14 +205,13 @@ class Agent:
                     #if plan was found initially
                     try :
                         plan_b_g.plan = State.Plans[plan_b_g]
-                        box_has_plan_to_goal = True
                     except Exception as ex :
-                        box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(box.location)                        
-                        if box_has_plan_to_goal :
+                        plan_b_g.CreateBeliefPlan()   
+                        if len(plan_b_g.plan) > 0 :
                             plan_b_g.plan.reverse()
                             State.Plans[plan_b_g] = plan_b_g.plan
                     
-                    if box_has_plan_to_goal :
+                    if len(plan_b_g.plan) > 0 :
                         plan_a_b_g.extend(plan_b_g.plan)
                         #save the shortest path
                         if ((len(plan_a_b_g) == min_plan_length and len(plan_b_g.plan) < min_b_g_length)
@@ -232,8 +230,8 @@ class Agent:
         for box in self.boxes :
             if box != save_box :
                 plan_a_b = Plan(self.location, box.location) # Plan for the agent to reach box
-                agent_has_plan_to_box = plan_a_b.CreateIntentionPlan(self.location,self.location)                        
-                if agent_has_plan_to_box :
+                plan_a_b.CreateIntentionPlan(self.location)                        
+                if len(plan_a_b.plan) > 0 :
                     plan_a_b.plan.reverse()                    
                     plan_a_b_g = deque()    
                     plan_a_b_g.extend(plan_a_b.plan)
@@ -247,11 +245,11 @@ class Agent:
                         tmpQueue.put(heur_goal)
                         if goal_location not in State.GoalDependency.keys() :                        
                             plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
-                            box_has_plan_to_goal = plan_b_g.CreateIntentionPlan(box.location,self.location) 
-                            if box_has_plan_to_goal :
+                            plan_b_g.CreateIntentionPlan(self.location) 
+                            if len(plan_b_g.plan) > 0 :
                                 plan_b_g.plan.reverse()
                                 plan_a_b_g.extend(plan_b_g.plan)
-                                self.plan1 = plan_a_b_g.copy()
+                                self.plan1 = plan_a_b_g
                                 self.move_box = box
                                 self.move_goal = goal_location
                                 break
@@ -284,14 +282,13 @@ class Agent:
             #if plan was found initially
                 try :
                     plan_a_b.plan = State.Plans[plan_a_b]
-                    agent_has_plan_to_box = True
                 except Exception as ex :
-                    agent_has_plan_to_box = plan_a_b.CreateBeliefPlan(agent_next_loc)                        
-                    if agent_has_plan_to_box :
+                    plan_a_b.CreateBeliefPlan()                        
+                    if len(plan_a_b.plan) > 0 :
                         plan_a_b.plan.reverse()
                     
                 plan_a_b_g = deque()
-                if agent_has_plan_to_box :
+                if len(plan_a_b.plan) > 0 :
                     plan_a_b_g.extend(plan_a_b.plan)                                    
                 
                     goal_location = None
@@ -314,13 +311,12 @@ class Agent:
                         
                         try :
                             plan_b_g.plan = State.Plans[plan_b_g]  #if plan was found initially
-                            box_has_plan_to_goal = True
                         except Exception as ex :
-                            box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(box.location)                        
-                            if box_has_plan_to_goal :
+                            plan_b_g.CreateBeliefPlan()                        
+                            if len(plan_b_g.plan) > 0 :
                                 plan_b_g.plan.reverse()
                         
-                        if box_has_plan_to_goal :
+                        if len(plan_b_g.plan) > 0 :
                             plan_a_b_g.extend(plan_b_g.plan)
                             #save the shortest path
                             if ((len(plan_a_b_g) == min_plan_length and len(plan_b_g.plan) < min_b_g_length)
@@ -392,10 +388,9 @@ class Agent:
                 plan_b_g = Plan(self.move_box.location,goal_location)    
                 try :
                     plan_b_g.plan = State.Plans[plan_b_g]
-                    box_has_plan_to_goal = True
                 except Exception as ex :
-                    box_has_plan_to_goal = plan_b_g.CreateBeliefPlan(self.move_box.location)                        
-                    if box_has_plan_to_goal :
+                    plan_b_g.CreateBeliefPlan()                      
+                    if len(plan_b_g.plan) > 0 :
                         plan_b_g.plan.reverse()
                         State.Plans[plan_b_g] = plan_b_g.plan
                         tmpQueue.put((len(plan_b_g.plan),goal_location))
@@ -442,8 +437,8 @@ class Agent:
         
         for box in self.request_boxes :
             plan_a_b = Plan(self.location,box.location)
-            agent_has_plan_to_box = plan_a_b.CreateIntentionPlan(self.location,self.location)
-            if agent_has_plan_to_box :
+            plan_a_b.CreateIntentionPlan(self.location)
+            if len(plan_a_b.plan) > 0 :
                 plan_a_b.plan.reverse()
                 new_boxes.append(box)
                 self.request_boxes.remove(box)
@@ -460,8 +455,8 @@ class Agent:
         
         dead_cell = dead_cells.pop()
         plan_b_c = Plan(box.location,dead_cell)
-        box_has_plan_to_park = plan_b_c.CreateIntentionPlan(box.location,self.location)
-        if box_has_plan_to_park :
+        plan_b_c.CreateIntentionPlan(self.location)
+        if len(plan_b_c.plan) > 0 :
             plan_b_c.plan.reverse()
             self.request_plan.extend(plan_a_b.plan)
             self.request_plan.extend(plan_b_c.plan)
@@ -472,8 +467,8 @@ class Agent:
             for box in self.request_boxes :
                 next_agent_location = self.request_plan[-2]
                 plan_a_b = Plan(next_agent_location,box.location)
-                agent_has_plan_to_box = plan_a_b.CreateAlernativeIntentionPlan(next_agent_location,additional_locations)
-                if agent_has_plan_to_box :
+                plan_a_b.CreateAlternativeIntentionPlan(additional_locations)
+                if len(plan_a_b.plan) > 0 :
                     plan_a_b.plan.reverse()
                     new_boxes.append(box)
                     additional_locations.add(box.location)
@@ -485,8 +480,8 @@ class Agent:
             
             dead_cell = dead_cells.pop()
             plan_b_c = Plan(box.location,dead_cell)
-            box_has_plan_to_park = plan_b_c.CreateAlernativeIntentionPlan(box.location,additional_locations)
-            if box_has_plan_to_park :
+            plan_b_c.CreateAlternativeIntentionPlan(additional_locations)
+            if len(plan_b_c.plan) > 0 :
                 plan_b_c.plan.reverse()
                 self.request_plan.extend(plan_a_b.plan)
                 self.request_plan.extend(plan_b_c.plan)

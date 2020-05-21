@@ -16,6 +16,7 @@ class Plan():
         self.end = end
         self.frontier_set = {self.start}
         self.plan = deque()
+        self.cost = ()
 
     def __eq__(self,other) :
         if self.start == other.start and self.end == other.end :
@@ -41,86 +42,86 @@ class Plan():
 
     def Heuristic(self, location): #we need to improve the heuristic
         return abs(self.end.x - location.x) + abs(self.end.y - location.y)
+        
+    def CreatePath(self,came_from) :
+        current = self.end
+        self.plan = deque()
+        while current != self.start:
+            self.plan.append(current)
+            if current in came_from.keys() :
+                current = came_from[current]
+            else :
+                self.plan = deque()
+                return    
+        
+    #while finding a plan, relax the preconditions .. make A* instead .. 
+    def CreateBeliefPlan(self):
+        frontier = PriorityQueue()
+        frontier.put((0,self.start))
+        came_from = {}
+        cost_so_far = {}
+        came_from[self.start] = None
+        cost_so_far[self.start] = 0
+        
+        while not frontier.empty():
+            current = frontier.get()[1]        
+            if current == self.end:
+                break        
+            for n in State.Neighbours[current]:
+                new_cost = cost_so_far[current] + 1
+                if n not in cost_so_far or new_cost < cost_so_far[n]:
+                    cost_so_far[n] = new_cost
+                    priority = new_cost + self.Heuristic(n)
+                    frontier.put((priority,n))
+                    came_from[n] = current
+        
+        self.CreatePath(came_from)
 
     #while finding a plan, relax the preconditions .. make A* instead .. 
-    def CreateBeliefPlan(self, loc):
-        if loc == self.end :
-            return True        
-        try :
-            leaves = State.Neighbours[loc]
-        except Exception as ex :
-            HandleError('Plan'+str(loc)+' '+repr(ex))
-            
+    def CreateIntentionPlan(self,agent_location):
         frontier = PriorityQueue()
-
-        for leaf in leaves:
-            if leaf not in self.frontier_set :
-                try:
-                    heur = self.Heuristic(leaf)
-                    frontier.put((heur, leaf))
-                    self.frontier_set.add(leaf)
-                except Exception as ex:
-                    HandleError('Plan'+str(ex) + ' ' + str(heur) + ' leaf ' + str(leaf) + ' neighbours of ' + str(loc))
-
-        if frontier.empty():
-            return False
-        else:
-            while not frontier.empty():
-                leaf = frontier.get()[1]
-                if self.CreateBeliefPlan(leaf):
-                    self.plan.append(leaf)
-                    return True
-
-    #while finding a plan, take preconditions into account
-    def CreateIntentionPlan(self, loc, agent_location):
-        if loc == self.end:
-            return True        
-        try :
-            leaves = State.Neighbours[loc]
-        except Exception as ex :
-            HandleError('Plan '+str(loc)+' '+repr(ex))
-            
-        frontier = PriorityQueue()
-
-        for leaf in leaves:
-            if leaf not in self.frontier_set and (leaf in State.FreeCells or leaf==self.end or leaf == agent_location) :
-                try:
-                    heur = self.Heuristic(leaf)
-                    frontier.put((heur, leaf))
-                    self.frontier_set.add(leaf)
-                except Exception as ex:
-                    HandleError('Plan'+str(ex) + ' ' + str(heur) + ' leaf ' + str(leaf) + ' neighbours of ' + str(loc))
-
-        if frontier.empty():
-            return False
-        else:
-            while not frontier.empty():
-                leaf = frontier.get()[1]
-                if self.CreateIntentionPlan(leaf, agent_location):
-                    self.plan.append(leaf)
-                    return True    
-
+        frontier.put((0,self.start))
+        came_from = {}
+        cost_so_far = {}
+        came_from[self.start] = None
+        cost_so_far[self.start] = 0
+        
+        while not frontier.empty():
+            current = frontier.get()[1]        
+            if current == self.end:
+                break        
+            for n in State.Neighbours[current]:
+                if n in State.FreeCells or n == self.end or n == agent_location :
+                    new_cost = cost_so_far[current] + 1
+                    if n not in cost_so_far or new_cost < cost_so_far[n] :                        
+                        cost_so_far[n] = new_cost 
+                        priority = new_cost + self.Heuristic(n)
+                        frontier.put((priority,n))
+                        came_from[n] = current
+    
+        self.CreatePath(came_from)
 #planning a request
-    def CreateAlernativeIntentionPlan(self,loc,valid_locations) :
-        if loc == self.end:
-            return True        
-        leaves = State.Neighbours[loc]
-            
+    def CreateAlternativeIntentionPlan(self,valid_locations) :
         frontier = PriorityQueue()
-
-        for leaf in leaves:
-            if leaf not in self.frontier_set and (leaf in State.FreeCells or leaf==self.end or leaf in valid_locations) :
-                heur = self.Heuristic(leaf)
-                frontier.put((heur, leaf))
-                self.frontier_set.add(leaf)
-
-        if frontier.empty():
-            return False
-        else:
-            while not frontier.empty():
-                leaf = frontier.get()[1]
-                if self.CreateAlernativeIntentionPlan(leaf,valid_locations):
-                    self.plan.append(leaf)
-                    return True                
+        frontier.put((0,self.start))
+        came_from = {}
+        cost_so_far = {}
+        came_from[self.start] = None
+        cost_so_far[self.start] = 0
+        
+        while not frontier.empty():
+            current = frontier.get()[1]        
+            if current == self.end:
+                break        
+            for n in State.Neighbours[current]:
+                if n in State.FreeCells or n == self.end or n in valid_locations :
+                    new_cost = cost_so_far[current] + 1
+                    if n not in cost_so_far or new_cost < cost_so_far[n] : 
+                        cost_so_far[n] = new_cost
+                        priority = new_cost + self.Heuristic(n)
+                        frontier.put((priority,n))
+                        came_from[n] = current
+    
+        self.CreatePath(came_from) 
     
 
