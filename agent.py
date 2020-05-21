@@ -401,9 +401,9 @@ class Agent:
         #update next request
         if len(self.next_request) > 0 :
             self.request_plan = self.next_request
-            self.next_request = deque()
             self.move_box = self.request_boxes.popleft()
-            self.move_goal = None
+            self.next_request = deque()
+            self.FindRequestGoal()
         else :
             self.request_plan = deque()
                                 
@@ -618,7 +618,7 @@ class Agent:
             else:
                 pull,agent_to = self.PullDecision() #check if rest of actions should be pull or push
                 
-                if pull and len(set(State.Neighbours[agent_to]).intersection(State.FreeCells)) > 1:
+                if pull and agent_to is not None and len(set(State.Neighbours[agent_to]).intersection(State.FreeCells)) > 1:
                     if agent_to in State.FreeCells :
                         action = self.Pull(self.move_box, agent_to)
                     else :
@@ -651,10 +651,10 @@ class Agent:
                 if man_dist != 1 :                    
                     self.next_request = deque(list_request[index+1:])
                     self.request_plan = deque(list_request[:index+1])
-                    self.move_goal
-                    return
+                    break
                 
         self.move_goal = self.request_plan[-1]
+        return
         
     def ExecuteRequest(self) :
         
@@ -674,8 +674,8 @@ class Agent:
                     self.plan1.insert(0,old_location)
                 return action
         
-        if self.move_goal is None and self.move_box is not None :
-            self.FindRequestGoal()
+        #if self.move_goal is None and self.move_box is not None :
+        #    self.FindRequestGoal()
             
         cell1 = self.request_plan.popleft()
         
@@ -692,7 +692,7 @@ class Agent:
                 action = self.Push(self.move_box,cell2)
             else:
                 pull,agent_to = self.PullRequest() #check if rest of actions should be pull or push
-                if pull and len(set(State.Neighbours[agent_to]).intersection(State.FreeCells)) > 1:
+                if pull and agent_to is not None and len(set(State.Neighbours[agent_to]).intersection(State.FreeCells)) > 1:
                     if agent_to in State.FreeCells :
                         action = self.Pull(self.move_box, agent_to)
                     else :
