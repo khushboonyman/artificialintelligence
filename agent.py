@@ -162,7 +162,8 @@ class Agent:
     #agent finds any intention plan 
     def MakeAnyIntentionPlan(self):                        
         plan_made = self.FindShortestIntentionPath()
-        self.FindNextBox()
+        if plan_made :
+            self.FindNextBox()
         return plan_made
         
     def Replan(self,other_box,other_goal) :        
@@ -585,7 +586,7 @@ class Agent:
                 agents,blocking_box = State.getBoxAgent(letter_or_num,cell)
                 if len(agents) > 0 and blocking_box is not None :
                     for agent in agents :
-                        if blocking_box not in agent.request_boxes and blocking_box != agent.move_box and len(agent.request_plan) == 0 :
+                        if blocking_box not in agent.request_boxes and len(agent.request_plan) == 0 and (agent.move_box is None or blocking_box != agent.move_box) :
                             self.AssignRequest(agent,request,blocking_box)
                 if blocking_box is None or blocking_box.color != self.color :
                     self.wait = True
@@ -631,7 +632,6 @@ class Agent:
                 if len(self.request_plan) > 1 :
                     agent_to = self.request_plan[1]
                     if len(self.request_plan) == 2 :
-                        ToServer('#'+str(agent_to)+' '+str(next_start)+' '+str(self.move_box))
                         available = set(State.Neighbours[agent_to]).intersection(set(State.Neighbours[next_start])).discard(self.move_box.location)
                         if available is None :
                             pull = False
@@ -654,13 +654,12 @@ class Agent:
         if self.wait :
             return action
                 
-        cell1 = self.plan1.popleft()
-        cell2 = self.plan1[0]  
-        
+        cell1 = self.plan1.popleft()        
              
         if self.move_box.location != cell1 :  #Move towards the box
             action = self.Move(cell1)  
-        else:            
+        else:
+            cell2 = self.plan1[0]              
             if cell2 != self.location : #If next to next location is where box should be, then push
                 action = self.Push(self.move_box,cell2)
             else:
@@ -789,8 +788,9 @@ class Agent:
     
         #while replanning, make intentional plan
         if len(not_free_cells) != 0 :            
-            ip_made = False             
-            ip_made = self.MakeCurrentIntentionPlan(request=True) #first try with chosen box and goal        
+            ip_made = False  
+            if self.move_box is not None :
+                ip_made = self.MakeCurrentIntentionPlan(request=True)       
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=True) #make request to agent whose box blocks the current agent
         else :            
