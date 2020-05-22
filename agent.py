@@ -43,6 +43,7 @@ class Agent:
         self.next_request = deque()
         self.request_boxes = deque()
         self.wait = False
+        self.goal = None
         
     def __str__(self):
         return str(self.location) + ' Col: ' + self.color + ' Num : ' + self.number
@@ -139,10 +140,20 @@ class Agent:
                 return True
         return False
     
+    def MakeOwnGoalPlan(self):                
+        plan_a_g = Plan(self.location, self.goal) # Plan for the agent to reach goal
+        plan_a_g.CreateIntentionPlan(self.location)                        
+        if len(plan_a_g.plan) > 0 :
+            plan_a_g.plan.reverse()                    
+            self.request_plan = plan_a_g.plan
+                        
     #agent picks goals that have no dependency and all boxes and finds shortest agent-box-goal path ..relaxed
     def MakeDesirePlan(self):
         if len(self.boxes) == 0 :
-            return        
+            if self.goal is not None and self.location != self.goal :
+                self.MakeOwnGoalPlan()
+            else :
+                return
         self.move_box,self.move_goal = None,None
         self.plan1 = deque()        
         self.FindShortestPath()

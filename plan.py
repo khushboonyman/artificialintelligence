@@ -73,6 +73,8 @@ class Plan():
                 break        
             for n in State.Neighbours[current]:
                 new_cost = cost_so_far[current] + 1
+                if n not in State.FreeCells and n != self.end :
+                    new_cost += 1
                 if n not in cost_so_far or new_cost < cost_so_far[n]:
                     cost_so_far[n] = new_cost
                     priority = new_cost + self.Heuristic(n)

@@ -19,6 +19,7 @@ class State :
     Paths = set()
     
     #one time but save 
+    AgentGoal = dict()
     SingleAgent = False #check if its a single agent level 
     Neighbours = dict() #dictionary of non-wall neighbours for each location .. {location : list(location)}
     MAX_ROW = 0 
