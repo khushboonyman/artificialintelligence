@@ -111,10 +111,23 @@ def SetUpObjects() :
     State.BoxAt = dict() 
     State.FreeCells = set() 
     State.GoalLocations = set()
+    State.Walls = set()
+    State.Walls.add('+')
     
     locations = list()
     pattern_agent = re.compile("[0-9]+")
     pattern_box = re.compile("[A-Z]+")
+    
+    for key,value in State.color_dict.items() :
+        agent_found = False
+        for v in value :
+            if pattern_agent.fullmatch(v) is not None :
+                agent_found = True
+        if not agent_found :
+            for v in value :
+                if v != '' :
+                    State.Walls.add(v)
+                    
     for i_index, row in enumerate(State.current_level):
         locations_of_a_row = list()
         for j_index, col in enumerate(row):
@@ -160,15 +173,15 @@ def SetUpObjects() :
         if START_COL < END_COL :
             for col in range(START_COL, END_COL):
                 try :
-                    if State.current_level[row][col] != '+' :                        
+                    if State.current_level[row][col] not in State.Walls :                        
                         State.Neighbours[locations[row][col]] = list()
-                        if len(State.current_level[row + 1]) > col and State.current_level[row + 1][col] != '+':
+                        if len(State.current_level[row + 1]) > col and State.current_level[row + 1][col] not in State.Walls :
                             State.Neighbours[locations[row][col]].append(locations[row + 1][col])
-                        if len(State.current_level[row - 1]) > col and State.current_level[row - 1][col] != '+':
+                        if len(State.current_level[row - 1]) > col and State.current_level[row - 1][col] not in State.Walls :
                             State.Neighbours[locations[row][col]].append(locations[row - 1][col])
-                        if State.current_level[row][col + 1] != '+':
+                        if State.current_level[row][col + 1] not in State.Walls :
                             State.Neighbours[locations[row][col]].append(locations[row][col + 1])
-                        if State.current_level[row][col - 1] != '+':
+                        if State.current_level[row][col - 1] not in State.Walls :
                             State.Neighbours[locations[row][col]].append(locations[row][col - 1])
                 except Exception as ex :
                     HandleError('SetupObjects'+' Index row ='+str(row)+'col ='+str(col)+'/nIndex error {}'.format(repr(ex)))
@@ -199,13 +212,22 @@ def MakeInitialPlan():
                                 plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
                                 plan_b_g.CreateBeliefPlan()
                                 if len(plan_b_g.plan) > 0 :
+                        ########################################################################
+                        #############SAVING GOAL TO BOXES#######################################
                                     box.goals.put((len(plan_b_g.plan),goal_location))
-                                    if len(plan_b_g.plan) > 1 :
-                                        plan_g_b = Plan(goal_location,box.location) #fix it
-                                        plan_g_b.plan = deque(list(plan_b_g.plan)[1:])
-                                        plan_g_b.plan.append(box.location)
-                                        State.Plans[plan_g_b] = plan_g_b.plan
-                                            
+                                    if len(plan_b_g.plan) > 2 :
+                                        goal_prev_3_loc = plan_b_g.plan[2]
+                                        if len(plan_b_g.plan) > 3 :
+                                            goal_prev_4_loc = plan_b_g.plan[3]
+                                        else :
+                                            goal_prev_4_loc = None                                             
+                                        for n in State.Neighbours[goal_prev_3_loc] :
+                                            if goal_prev_4_loc is None or n != goal_prev_4_loc :
+                                                plan_g_b = Plan(n,box.location)                                                 
+                                                plan_g_b.plan = deque(list(plan_b_g.plan)[2:])
+                                                plan_g_b.plan.append(box.location)
+                                                State.Plans[plan_g_b] = plan_g_b.plan
+                       ############################################################################                     
                                     plan_b_g.plan.reverse()
                                     State.Plans[plan_b_g] = plan_b_g.plan                        
                                         

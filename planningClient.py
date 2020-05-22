@@ -42,7 +42,7 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/levels2020/dontwork/mabaguettes.lvl', 'r')
+            server_messages = open('levels/levels2020/works/SAthreePO.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
@@ -81,6 +81,9 @@ if __name__ == '__main__':
             if len(agent.plan1) != 0 or len(agent.request_plan) != 0 :
                 cont = True
         
+        if not cont :
+            break
+        
         while True :
             conflict = False
             for agent1 in State.AgentAt :
@@ -111,6 +114,7 @@ if __name__ == '__main__':
                 agent_action = agent.ExecuteDecision()            
             combined_actions.append(agent_action)
         
+        
         execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely    
         ToServer(execute)
                      
@@ -128,8 +132,7 @@ if __name__ == '__main__':
                 execute = ';'.join(final_combined_actions)  #prepare joint actions of agents to run parallely    
                 ToServer(execute)         
         
-        if not cont :
-            break
+        
 ######################################################################################################################    
     ToServer('#Memory used ' + str(memory.get_usage()) + ' MB')
 
