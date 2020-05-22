@@ -556,7 +556,7 @@ class Agent:
         
         current = end_loc 
         
-        while current != self.location :
+        while current is not None and current != self.location :
             self.request_plan.append(current)
             if current in came_from.keys() :
                 current = came_from[current]
