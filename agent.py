@@ -140,6 +140,17 @@ class Agent:
                 return True
         return False
     
+    #there are some cells that are not free in the current plan, then agent tries to find another path .. unrelaxed
+    def MakeCurrentGoalIntentionPlan(self) :
+        self.move_goal = self.request_plan[-1]
+        plan_a_g = Plan(self.location, self.move_goal) # Plan for the agent to reach box
+        plan_a_g.CreateIntentionPlan(self.location)        
+        if len(plan_a_g.plan) > 0 :
+            plan_a_g.plan.reverse()
+            self.request_plan = plan_a_g.plan
+            return True
+        return False
+    
     def MakeOwnGoalPlan(self):                
         plan_a_g = Plan(self.location, self.goal) # Plan for the agent to reach goal
         plan_a_g.CreateIntentionPlan(self.location)                        
@@ -801,7 +812,9 @@ class Agent:
         if len(not_free_cells) != 0 :            
             ip_made = False  
             if self.move_box is not None :
-                ip_made = self.MakeCurrentIntentionPlan(request=True)       
+                ip_made = self.MakeCurrentIntentionPlan(request=True) 
+            #else :
+            #    ip_made = self.MakeCurrentGoalIntentionPlan()
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=True) #make request to agent whose box blocks the current agent
         else :  

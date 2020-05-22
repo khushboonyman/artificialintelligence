@@ -42,7 +42,7 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/levels2020/dontwork/mathezoo.lvl', 'r')
+            server_messages = open('levels/levels2020/works/SAthreePO.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
         if not cont :
             break
         
-        while True and not State.SingleAgent :
+        while True :
             conflict = False
             for agent1 in State.AgentAt :
                 for agent2 in State.AgentAt :
@@ -106,15 +106,14 @@ if __name__ == '__main__':
         
         if len(State.Requests) != 0 :
             State.Bidding()
-        
-        
+            
 ############################################################################################################        
         for agent in State.AgentAt :
             agent_action = no_op
             if len(agent.plan1) > 0 or len(agent.request_plan) > 0 :
                 agent_action = agent.ExecuteDecision()            
             combined_actions.append(agent_action)
-            ##################test#################
+        
         
         execute = ';'.join(combined_actions)  #prepare joint actions of agents to run parallely    
         ToServer(execute)

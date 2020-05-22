@@ -43,10 +43,12 @@ class Plan():
     def Heuristic(self, location): #we need to improve the heuristic
         return abs(self.end.x - location.x) + abs(self.end.y - location.y)
         
-    def CreatePath(self,came_from,intention,agent_location) :
+    def CreatePath(self,came_from,intention) :
         self.plan = deque()
-        if intention and self.end not in State.FreeCells and (agent_location is None or self.end != agent_location) :
+        if intention and self.end not in State.FreeCells :
+            #if agent_location is not None and self.end != agent_location :
             return
+            
         current = self.end
             
         while current != self.start:
@@ -74,12 +76,14 @@ class Plan():
             for n in State.Neighbours[current]:
                 new_cost = cost_so_far[current] + 1
                 if n not in cost_so_far or new_cost < cost_so_far[n]:
+                    if n in State.GoalLocations and n != self.end :
+                        new_cost += 1     
                     cost_so_far[n] = new_cost
                     priority = new_cost + self.Heuristic(n)
                     frontier.put((priority,n))
                     came_from[n] = current
         
-        self.CreatePath(came_from,intention=False,agent_location=None)
+        self.CreatePath(came_from,intention=False)
 
     #while finding a plan, relax the preconditions .. make A* instead .. 
     def CreateIntentionPlan(self,agent_location,intention=False):
@@ -103,7 +107,7 @@ class Plan():
                         frontier.put((priority,n))
                         came_from[n] = current
     
-        self.CreatePath(came_from,intention,agent_location)
+        self.CreatePath(came_from,intention)
 #planning a request
     def CreateAlternativeIntentionPlan(self,valid_locations,intention=False) :
         frontier = PriorityQueue()
@@ -126,6 +130,6 @@ class Plan():
                         frontier.put((priority,n))
                         came_from[n] = current
     
-        self.CreatePath(came_from,intention,agent_location=None) 
+        self.CreatePath(came_from,intention) 
     
 
