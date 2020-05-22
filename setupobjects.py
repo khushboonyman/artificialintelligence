@@ -56,13 +56,14 @@ def ReadHeaders(messages):
             line = Readlines(messages)
             if line[0] == '#' :
                 break               
-            color_data = re.split(', |: |\s', line)
+            color_data = re.split(',|: |\s', line)
             if color_data[0] in list_of_colors:
                 for color_agent_box in color_data:
-                    if color_agent_box in added:
-                        HandleError('Color, agent or box has already been specified')
-                    else:
-                        added.add(color_agent_box)
+                    if color_agent_box != '' :                        
+                        if color_agent_box in added:
+                            HandleError('Color, agent or box has already been specified')
+                        else:
+                            added.add(color_agent_box)
                 State.color_dict[color_data[0]] = color_data[1:]
             else:
                 HandleError('Unacceptable color')                   

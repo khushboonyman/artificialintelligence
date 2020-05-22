@@ -42,7 +42,7 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/levels2020/dontwork/sabaguettes.lvl', 'r')
+            server_messages = open('levels/levels2020/dontwork/savaikings.lvl', 'r')
         ToServer('PlanningClient')
         #Read the input from server
         ReadHeaders(server_messages)
