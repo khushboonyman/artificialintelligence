@@ -168,12 +168,20 @@ class Agent:
         
     def Replan(self,other_box,other_goal) :        
         if other_box in self.boxes :
-            self.boxes.remove(other_box)        
+            self.boxes.remove(other_box)
+        for box in self.boxes :
+            tmpQueue = PriorityQueue()
+            while not box.goals.empty() :
+                heur_goal = box.goals.get()
+                if heur_goal[1] != other_goal :
+                    tmpQueue.put(heur_goal)
+            while not tmpQueue.empty() :
+                box.goals.put(tmpQueue.get())
+                
         self.move_box,self.move_goal = None,None
         self.plan1 = deque()        
         self.FindShortestPath(other_goal)
         self.FindNextBox()        
-        self.boxes.add(other_box)
         
     def FindShortestPath(self,old_goal=None):
         min_plan_length = State.MAX_ROW*State.MAX_COL
@@ -366,7 +374,7 @@ class Agent:
         #delete box from agent's box list
         new_set_of_boxes = set()
         for box in self.boxes :
-            if box != self.move_box :
+            if box != self.move_box and not box.goals.empty() :
                 new_set_of_boxes.add(box)
         self.boxes = new_set_of_boxes
         
@@ -763,10 +771,12 @@ class Agent:
             return
         
         not_free_cells = set(self.plan1).difference(State.FreeCells)
+        ######################################################################    
+        
         if self.move_box is not None :
             not_free_cells.discard(self.move_box.location)
         not_free_cells.discard(self.location)
-    
+        
         #while replanning, make intentional plan
         if len(not_free_cells) != 0 :            
             ip_made = False             
@@ -775,13 +785,14 @@ class Agent:
                 ip_made = self.MakeAnyIntentionPlan() #see if any plan can be made        
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=False) #make request to agent whose box blocks the current agent
-        else :        
+        else : 
             self.wait = False
                 
     def CheckRequestPlan(self):          
-        #find if any desire plan path is not free
-            
+        
         not_free_cells = set(self.request_plan).difference(State.FreeCells)
+        ####################################################################    
+        
         if self.move_box is not None :
             not_free_cells.discard(self.move_box.location)
         not_free_cells.discard(self.location)
@@ -793,5 +804,5 @@ class Agent:
                 ip_made = self.MakeCurrentIntentionPlan(request=True)       
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=True) #make request to agent whose box blocks the current agent
-        else :            
+        else :  
             self.wait = False
