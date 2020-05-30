@@ -36,6 +36,7 @@ for agent in State.AgentAt :
             length,goal = box.goals.get()
             print('goals'+str(length)+str(goal))
             
+            
 for agent in State.AgentAt :   
     print('agent '+str(agent)+ ' boxes ')
     for box in agent.request_boxes :
@@ -56,6 +57,10 @@ for agent in State.AgentAt :
     print('plan2')
     for p2 in agent.plan2 :
         print(p2)
+        
+for agent in State.AgentAt :
+    print('agent '+str(agent)+' goal '+str(agent.goal))
+    
             
 ########################TESTING##################################
 

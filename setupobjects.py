@@ -151,13 +151,13 @@ def SetUpObjects() :
                         State.BoxAt[col].append(box)
             goal = State.goal_level[i_index][j_index]
             if pattern_box.fullmatch(goal) is not None:  #making dictionary of goals .. {letter : list(location)}
-                if goal != col :                    
-                    for key, value in State.color_dict.items():
-                        if goal in value:
-                            if goal not in State.GoalAt.keys() :
-                                State.GoalAt[goal] = list()    
-                            State.GoalAt[goal].append(loc)
-                            State.GoalLocations.add(loc)
+                #if goal != col :                    
+                for key, value in State.color_dict.items():
+                    if goal in value:
+                        if goal not in State.GoalAt.keys() :
+                            State.GoalAt[goal] = list()    
+                        State.GoalAt[goal].append(loc)
+                        State.GoalLocations.add(loc)
             if pattern_agent.fullmatch(goal) is not None:  #making dictionary of goals .. {letter : list(location)}
                 State.AgentGoal[goal] = loc
                 
@@ -184,11 +184,10 @@ def SetUpObjects() :
                         if State.current_level[row][col - 1] not in State.Walls :
                             State.Neighbours[locations[row][col]].append(locations[row][col - 1])
                 except Exception as ex :
-                    HandleError('SetupObjects'+' Index row ='+str(row)+'col ='+str(col)+'/nIndex error {}'.format(repr(ex)))
-            
+                    HandleError('SetupObjects'+' Index row ='+str(row)+'col ='+str(col)+'/nIndex error {}'.format(repr(ex)))            
         
 def MakeInitialPlan():
-    
+    #colors = set()    
     for agent in State.AgentAt :
         if agent.number in State.AgentGoal.keys():
             agent.goal = State.AgentGoal[agent.number]
@@ -199,37 +198,43 @@ def MakeInitialPlan():
             if letter in State.BoxAt.keys() :  
                 boxes = State.BoxAt[letter]
                 for box in boxes :
-                    #box.goals = PriorityQueue()
+                    #ToServer('#'+str(box))
                     plan_a_b = Plan(agent.location, box.location) # Plan for the agent to reach box
                     plan_a_b.CreateBeliefPlan()
                     if len(plan_a_b.plan) > 0 :                        
                         agent.boxes.add(box)
                         plan_a_b.plan.reverse()
                         State.Plans[plan_a_b] = plan_a_b.plan                                                
-                        if letter in State.GoalAt.keys() :
-                            goals = State.GoalAt[letter]                        
+                        if letter in State.GoalAt.keys() and box.goals.empty() :
+                            goals = State.GoalAt[letter]
+                            goal_found = False
                             for goal_location in goals :
-                                plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
-                                plan_b_g.CreateBeliefPlan()
-                                if len(plan_b_g.plan) > 0 :
-                        ########################################################################
-                        #############SAVING GOAL TO BOXES#######################################
-                                    box.goals.put((len(plan_b_g.plan),goal_location))
-                                    if len(plan_b_g.plan) > 2 :
-                                        goal_prev_3_loc = plan_b_g.plan[2]
-                                        if len(plan_b_g.plan) > 3 :
-                                            goal_prev_4_loc = plan_b_g.plan[3]
-                                        else :
-                                            goal_prev_4_loc = None                                             
-                                        for n in State.Neighbours[goal_prev_3_loc] :
-                                            if goal_prev_4_loc is None or n != goal_prev_4_loc :
-                                                plan_g_b = Plan(n,box.location)                                                 
-                                                plan_g_b.plan = deque(list(plan_b_g.plan)[2:])
-                                                plan_g_b.plan.append(box.location)
-                                                State.Plans[plan_g_b] = plan_g_b.plan
-                       ############################################################################                     
-                                    plan_b_g.plan.reverse()
-                                    State.Plans[plan_b_g] = plan_b_g.plan                        
+                                if goal_location == box.location :
+                                    box.goals.queue.clear()
+                                    goal_found = True
+                                    box.goals.put((0,goal_location))
+                                if not goal_found :                                    
+                                    plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
+                                    plan_b_g.CreateBeliefPlan()
+                                    if len(plan_b_g.plan) > 0 :
+                            ########################################################################
+                            #############SAVING GOAL TO BOXES#######################################
+                                        box.goals.put((len(plan_b_g.plan),goal_location))
+                                        if len(plan_b_g.plan) > 2 :
+                                            goal_prev_3_loc = plan_b_g.plan[2]
+                                            if len(plan_b_g.plan) > 3 :
+                                                goal_prev_4_loc = plan_b_g.plan[3]
+                                            else :
+                                                goal_prev_4_loc = None                                             
+                                            for n in State.Neighbours[goal_prev_3_loc] :
+                                                if goal_prev_4_loc is None or n != goal_prev_4_loc :
+                                                    plan_g_b = Plan(n,box.location)                                                 
+                                                    plan_g_b.plan = deque(list(plan_b_g.plan)[2:])
+                                                    plan_g_b.plan.append(box.location)
+                                                    State.Plans[plan_g_b] = plan_g_b.plan
+                           ############################################################################                     
+                                        plan_b_g.plan.reverse()
+                                        State.Plans[plan_b_g] = plan_b_g.plan                        
                                         
                                     plan_a_g = Plan(agent.location,goal_location)
                                     if plan_a_g not in State.GoalPaths.keys() :
@@ -246,7 +251,7 @@ def MakeInitialPlan():
                                                         plan_new_a_g.plan = deque(tmp_list[:index])
                                                         plan_new_a_g.plan.append(p)
                                                         State.GoalPaths[plan_new_a_g] = plan_new_a_g.plan   
-
+        #colors.add(agent.color)
                         
 
 def FindDependency() :

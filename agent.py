@@ -160,16 +160,16 @@ class Agent:
                         
     #agent picks goals that have no dependency and all boxes and finds shortest agent-box-goal path ..relaxed
     def MakeDesirePlan(self):
-        if len(self.boxes) == 0 :
-            if self.goal is not None and self.location != self.goal :
-                self.MakeOwnGoalPlan()
-            else :
-                return
         self.move_box,self.move_goal = None,None
         self.plan1 = deque()        
         self.FindShortestPath()
         self.FindNextBox()
-        
+        if len(self.plan1) == 0 :
+            if self.goal is not None and self.location != self.goal :
+                self.MakeOwnGoalPlan()
+            else :
+                return
+            
     #agent finds any intention plan 
     def MakeAnyIntentionPlan(self):                        
         plan_made = self.FindShortestIntentionPath()
@@ -229,7 +229,7 @@ class Agent:
                 while not tmpQueue.empty() :
                     box.goals.put(tmpQueue.get())
                 
-                if goal_location is not None :                    
+                if goal_location is not None and goal_location != box.location :                    
                     plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
                     #if plan was found initially
                     try :
@@ -272,7 +272,7 @@ class Agent:
                         heur_goal = box.goals.get()
                         goal_location = heur_goal[1]
                         tmpQueue.put(heur_goal)
-                        if goal_location not in State.GoalDependency.keys() :                        
+                        if goal_location not in State.GoalDependency.keys() and goal_location != box.location :                        
                             plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
                             plan_b_g.CreateIntentionPlan(self.location,intention=True) 
                             if len(plan_b_g.plan) > 0 :
@@ -335,7 +335,7 @@ class Agent:
                     while not tmpQueue.empty() :
                         box.goals.put(tmpQueue.get())
                 
-                    if goal_location is not None :                    
+                    if goal_location is not None and goal_location != box.location :                    
                         plan_b_g = Plan(box.location, goal_location) # Plan for the box to reach goal
                         
                         try :
@@ -731,8 +731,6 @@ class Agent:
             if len(self.request_boxes) > 0 :
                 self.move_box = self.request_boxes.popleft()
                 self.FindRequestGoal()
-        #if self.move_goal is None and self.move_box is not None :
-        #    self.FindRequestGoal()
             
         cell1 = self.request_plan.popleft()       
         
@@ -813,8 +811,6 @@ class Agent:
             ip_made = False  
             if self.move_box is not None :
                 ip_made = self.MakeCurrentIntentionPlan(request=True) 
-            #else :
-            #    ip_made = self.MakeCurrentGoalIntentionPlan()
             if not ip_made :
                 self.MakeRequest(not_free_cells,request=True) #make request to agent whose box blocks the current agent
         else :  

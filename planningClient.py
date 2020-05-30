@@ -42,8 +42,8 @@ if __name__ == '__main__':
         if globals.server:
             server_messages = sys.stdin
         else :
-            server_messages = open('levels/levels2020/works/SAthreePO.lvl', 'r')
-        ToServer('PlanningClient')
+            server_messages = open('levels/works/MABaguettes.lvl', 'r')
+        ToServer('ThreePO')
         #Read the input from server
         ReadHeaders(server_messages)
         
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             server_messages.close()
 
     except Exception as ex:
-        HandleError('PlanningClient'+str(repr(ex)))
+        HandleError('ThreePO'+str(repr(ex)))
 
     #Prepare objects to be used later for processing    
     SetUpObjects()    
